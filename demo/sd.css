@@ -1,0 +1,14 @@
+QPalette{background:#EAF7FF;}*{outline:0px;color:#386487;}
+
+QToolButton{
+border:0px solid #DCDCDC;
+border-radius:0px;
+margin:0px;
+padding:3px;
+background:none;}
+QToolButton:hover{
+    background:#C0DCF2;
+}
+
+
+

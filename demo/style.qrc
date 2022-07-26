@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>sd.css</file>
+    </qresource>
+</RCC>
