@@ -58,12 +58,13 @@ void Widget::init()
     //IconHelper::setIcon(ui->btnMenu_Max, 0xf067);
     //IconHelper::setIcon(ui->btnMenu_Close, 0xf00d);
 
-    setWindowFlags(Qt::FramelessWindowHint);
+    setWindowFlags(Qt::FramelessWindowHint); //设置无边框
     QPixmap img = QPixmap(":/title.jpg");
     QSize PixSize = ui->labelTitle->size();
     img.scaled(PixSize,Qt::KeepAspectRatioByExpanding);
     ui->labelTitle->setScaledContents(true);
     ui->labelTitle->setPixmap(img);
+
     mainThread = new QThread;
     myThread = new VedioThread;
     myThread->moveToThread(mainThread);
@@ -277,15 +278,21 @@ void Widget::videoOpen()
    vid>>frame;
    cv::Mat frame2;
    cv::Mat frame3;
+   cv::Mat frame4;
    //cv::cvtColor(frame,frame1,CV_BGR2RGB);   //不处理的话颜色会偏蓝
 
-   frame2 = img.ImageBright(frame1,beta,alpha); //调整亮度和对比度函数
-   frame3 = img.ImageSaturation(frame2,saturation);    //调整饱和度函数
+   //frame2 = img.ImageBright(frame,beta,alpha); //调整亮度和对比度函数
+   //frame3 = img.ImageSaturation(frame2,saturation);    //调整饱和度函数
+   frame4 = img.ImageCV(frame);
    //frame3 = imgPro(frame);
-   //cv::namedWindow("video", cv::WINDOW_NORMAL);
-   //cv::imshow("video", frame3);
+   //cv::cvtColor(frame4,frame4,CV_BGR2RGB);
+   //cv::imshow("video1", frame);
+   //cv::namedWindow("video", cv::WINDOW_AUTOSIZE);
 
-   QImage dst =QImage(frame3.data,frame3.cols,frame3.rows,frame3.step,QImage::Format_RGB888); //将Mat转换成Image放到Label里显示
+   cv::cvtColor(frame4,frame4,cv::COLOR_BGR2RGB);
+   //cv::imshow("video", frame4);
+   frame4.convertTo(frame4,CV_8UC3,255.0);
+   QImage dst =QImage(frame4.data,frame4.cols,frame4.rows,frame4.step,QImage::Format_RGB888); //将Mat转换成Image放到Label里显示
    ui->label->setPixmap(QPixmap::fromImage(dst));
 
    //cv::imshow("ww",frame3);
