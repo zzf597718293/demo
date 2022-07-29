@@ -1,15 +1,15 @@
 #ifndef SERIALPORT_H
 #define SERIALPORT_H
 
-#include <QWidget>
+#include <QObject>
 #include<QSerialPort>
 #include<QSerialPortInfo>
 #include<QList>
-class Port : public QWidget
+class Port : public QObject
 {
     Q_OBJECT
 public:
-    explicit Port(QWidget *parent = nullptr);
+    explicit Port(QObject *parent = nullptr);
     ~Port();
     bool openCom();
     bool sendComm(int);

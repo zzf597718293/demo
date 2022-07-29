@@ -52,6 +52,7 @@ private:
     Port *port1;
     VedioThread *myThread;
     QThread *mainThread;
+    QThread *childPortThread;
     QList<QString> columnNames; //字段名集合
     QList<int> columnWidths;    //字段宽度集合
     DbPage *dbPage;
@@ -60,8 +61,7 @@ private:
     void loadStyle();
     void getAttend();
     void getAssistant();
-    cv::Mat imgPro(cv::Mat);
-    void DFT(cv::Mat ,cv::Mat& , cv::Mat& );
+    
 public slots:
     void videoOpen();
 private slots:

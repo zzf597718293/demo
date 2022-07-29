@@ -50,24 +50,27 @@ int Widget::getScreenIndex()
 
 void Widget::init()
 {
-
-    //QUIHelper::setFramelessForm(this);
-
-    //IconHelper::setIcon(ui->labelTitle, 0xf073, 30);
-    //IconHelper::setIcon(ui->btnMenu_Min, 0xf068);
-    //IconHelper::setIcon(ui->btnMenu_Max, 0xf067);
-    //IconHelper::setIcon(ui->btnMenu_Close, 0xf00d);
-
     setWindowFlags(Qt::FramelessWindowHint); //设置无边框
+    
     QPixmap img = QPixmap(":/title.jpg");
     QSize PixSize = ui->labelTitle->size();
     img.scaled(PixSize,Qt::KeepAspectRatioByExpanding);
     ui->labelTitle->setScaledContents(true);
     ui->labelTitle->setPixmap(img);
 
-    mainThread = new QThread;
+    mainThread = new QThread(this);
     myThread = new VedioThread;
     myThread->moveToThread(mainThread);
+
+    childPortThread = new QThread(this);
+    port1 = new Port();
+    port1->moveToThread(childPortThread);
+    childPortThread->start();
+    if(!port1->openCom())   //打开串口
+    {
+        QMessageBox warnBox(QMessageBox::Warning,"警告","串口打开失败",QMessageBox::Yes);
+        warnBox.exec();
+    }
     dbPage = new DbPage(this);
     dbPage->showSystem();
     ui->edtImagePath->setText(dbPage->imagePath);
@@ -75,7 +78,7 @@ void Widget::init()
     ui->label->setStyleSheet("QLabel{background-color:rgb(22,39,53);}");
     QSize icoSize(32, 32);
     int icoWidth = 85;
-    //loadStyle();           //设置全局样式
+    loadStyle();           //设置全局样式
     ui->edtChart->setValidator(new QRegExpValidator(QRegExp("[0-9]+$")));
     ui->cbGender->addItem("男");
     ui->cbGender->addItem("女");
@@ -160,119 +163,6 @@ void Widget::getAssistant() //初始化助理医师
     }
 }
 
-cv::Mat Widget::imgPro(cv::Mat image)
-{
-    cv::Mat image_gray, image_output, image_transform;   //定义输入图像，灰度图像，输出图像
-    cv::cvtColor(image, image_gray, cv::COLOR_BGR2GRAY); //转换为灰度图
-    //cv::imshow("image_gray", image_gray);
-
-        //1、傅里叶变换，image_output为可显示的频谱图，image_transform为傅里叶变换的复数结果
-        DFT(image_gray, image_output, image_transform);
-        //cv::imshow("image_output", image_output);
-        //2、巴特沃斯低通滤波
-        cv::Mat planes[] = { cv::Mat_<float>(image_output), cv::Mat::zeros(image_output.size(),CV_32F) };
-        cv::split(image_transform, planes);//分离通道，获取实部虚部
-        cv::Mat image_transform_real = planes[0];
-        cv::Mat image_transform_imag = planes[1];
-
-        int core_x = image_transform_real.rows / 2;//频谱图中心坐标
-        int core_y = image_transform_real.cols / 2;
-        int r = 60;  //滤波半径
-        float h;
-        float n = 1.5; //巴特沃斯系数
-        float D;  //距离中心距离
-        for (int i = 0; i < image_transform_real.rows; i++)
-        {
-            for (int j = 0; j < image_transform_real.cols; j++)
-            {
-                D = (i - core_x) * (i - core_x) + (j - core_y) * (j - core_y);
-                h = 1/(1+pow((D/(r*r)) , n));
-                image_transform_real.at<float>(i, j) = image_transform_real.at<float>(i, j) * h;
-                image_transform_imag.at<float>(i, j) = image_transform_imag.at<float>(i, j) * h;
-
-            }
-        }
-        planes[0] = image_transform_real;
-        planes[1] = image_transform_imag;
-        cv::Mat image_transform_ilpf;//定义巴特沃斯低通滤波结果
-        cv::merge(planes, 2, image_transform_ilpf);
-
-        //3、傅里叶逆变换
-        cv::Mat iDft[] = { cv::Mat_<float>(image_output), cv::Mat::zeros(image_output.size(),CV_32F) };
-        cv::idft(image_transform_ilpf, image_transform_ilpf);//傅立叶逆变换
-        cv::split(image_transform_ilpf, iDft);//分离通道，主要获取0通道
-        cv::magnitude(iDft[0], iDft[1], iDft[0]); //计算复数的幅值，保存在iDft[0]
-        cv::normalize(iDft[0], iDft[0], 0, 1, cv::NORM_MINMAX);//归一化处理
-        //cv::imshow("idft", iDft[0]);
-        //cv::waitKey(0);
-
-    return iDft[0];
-
-}
-
-void Widget::DFT(cv::Mat input_image, cv::Mat& output_image, cv::Mat& transform_image)
-{
-    //1.扩展图像矩阵，为2，3，5的倍数时运算速度快
-        int m = cv::getOptimalDFTSize(input_image.rows);
-        int n = cv::getOptimalDFTSize(input_image.cols);
-        cv::copyMakeBorder(input_image, input_image, 0, m - input_image.rows, 0, n - input_image.cols, cv::BORDER_CONSTANT, cv::Scalar::all(0));
-
-        //2.创建一个双通道矩阵planes，用来储存复数的实部与虚部
-        cv::Mat planes[] = { cv::Mat_<float>(input_image), cv::Mat::zeros(input_image.size(), CV_32F) };
-
-        //3.从多个单通道数组中创建一个多通道数组:transform_image。函数Merge将几个数组合并为一个多通道阵列，即输出数组的每个元素将是输入数组元素的级联
-        cv::merge(planes, 2, transform_image);
-
-        //4.进行傅立叶变换
-        cv::dft(transform_image, transform_image);
-
-        //5.计算复数的幅值，保存在output_image（频谱图）
-        cv::split(transform_image, planes); // 将双通道分为两个单通道，一个表示实部，一个表示虚部
-        cv::Mat transform_image_real = planes[0];
-        cv::Mat transform_image_imag = planes[1];
-
-        cv::magnitude(planes[0], planes[1], output_image); //计算复数的幅值，保存在output_image（频谱图）
-
-        //6.前面得到的频谱图数级过大，不好显示，因此转换
-        output_image += cv::Scalar(1);   // 取对数前将所有的像素都加1，防止log0
-        cv::log(output_image, output_image);   // 取对数
-        cv::normalize(output_image, output_image, 0, 1, cv::NORM_MINMAX); //归一化
-
-        //7.剪切和重分布幅度图像限
-        output_image = output_image(cv::Rect(0, 0, output_image.cols & -2, output_image.rows & -2));
-
-        // 重新排列傅里叶图像中的象限，使原点位于图像中心
-        int cx = output_image.cols / 2;
-        int cy = output_image.rows / 2;
-        cv::Mat q0(output_image, cv::Rect(0, 0, cx, cy));   // 左上区域
-        cv::Mat q1(output_image, cv::Rect(cx, 0, cx, cy));  // 右上区域
-        cv::Mat q2(output_image, cv::Rect(0, cy, cx, cy));  // 左下区域
-        cv::Mat q3(output_image, cv::Rect(cx, cy, cx, cy)); // 右下区域
-
-          //交换象限中心化
-        cv::Mat tmp;
-        q0.copyTo(tmp); q3.copyTo(q0); tmp.copyTo(q3);//左上与右下进行交换
-        q1.copyTo(tmp); q2.copyTo(q1); tmp.copyTo(q2);//右上与左下进行交换
-
-
-        cv::Mat q00(transform_image_real, cv::Rect(0, 0, cx, cy));   // 左上区域
-        cv::Mat q01(transform_image_real, cv::Rect(cx, 0, cx, cy));  // 右上区域
-        cv::Mat q02(transform_image_real, cv::Rect(0, cy, cx, cy));  // 左下区域
-        cv::Mat q03(transform_image_real, cv::Rect(cx, cy, cx, cy)); // 右下区域
-        q00.copyTo(tmp); q03.copyTo(q00); tmp.copyTo(q03);//左上与右下进行交换
-        q01.copyTo(tmp); q02.copyTo(q01); tmp.copyTo(q02);//右上与左下进行交换
-
-        cv::Mat q10(transform_image_imag, cv::Rect(0, 0, cx, cy));   // 左上区域
-        cv::Mat q11(transform_image_imag, cv::Rect(cx, 0, cx, cy));  // 右上区域
-        cv::Mat q12(transform_image_imag, cv::Rect(0, cy, cx, cy));  // 左下区域
-        cv::Mat q13(transform_image_imag, cv::Rect(cx, cy, cx, cy)); // 右下区域
-        q10.copyTo(tmp); q13.copyTo(q10); tmp.copyTo(q13);//左上与右下进行交换
-        q11.copyTo(tmp); q12.copyTo(q11); tmp.copyTo(q12);//右上与左下进行交换
-
-        planes[0] = transform_image_real;
-        planes[1] = transform_image_imag;
-        cv::merge(planes, 2, transform_image);//将傅里叶变换结果中心化
-}
 void Widget::videoOpen()
 {
    vid>>frame;
@@ -307,8 +197,8 @@ void Widget::on_btnOn_clicked()
     {
     timer->start(33);   //摄像头每秒30帧
 
-    port1 = new Port();
-    port1->openCom();   //打开串口
+
+
     ui->btnOn->setEnabled(false);
     ui->btnOff->setEnabled(true);
     ui->btnScreenshots->setEnabled(true);

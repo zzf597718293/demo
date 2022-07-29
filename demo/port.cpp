@@ -1,6 +1,6 @@
 #include "port.h"
 #include<QDebug>
-Port::Port(QWidget *parent) : QWidget(parent)
+Port::Port(QObject *parent) : QObject(parent)
 {
     m_serialPort = new QSerialPort();
 
@@ -17,7 +17,7 @@ bool Port::openCom()
         m_serialPort->clear();
         m_serialPort->close();
     }
-    m_serialPort->setPortName("COM5");
+    m_serialPort->setPortName("COM3");
     if(!m_serialPort->open(QIODevice::ReadWrite))
     {
         return false;
@@ -28,6 +28,7 @@ bool Port::openCom()
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
     m_serialPort->setParity(QSerialPort::NoParity);
     m_serialPort->setStopBits(QSerialPort::OneStop);
+    return true;
 }
 
 bool Port::sendComm(int value)
