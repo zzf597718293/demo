@@ -1,5 +1,5 @@
-#ifndef VEDIOTHREAD_H
-#define VEDIOTHREAD_H
+#ifndef VIDEOTHREAD_H
+#define VIDEOTHREAD_H
 #include<QThread>
 #include<QTimer>
 #include<QPushButton>
@@ -16,11 +16,11 @@
 #include<opencv2/imgproc/types_c.h>
 #include<opencv2/video/tracking.hpp>
 using namespace std;
-class VedioThread : public QObject
+class VideoThread : public QObject
 {
     Q_OBJECT
 public:
-    explicit VedioThread(QObject *parent = 0);
+    explicit VideoThread(QObject *parent = 0);
 
     void openCamera();
     void ThreadStart(QString);
@@ -37,4 +37,4 @@ private:
     bool stopFlag=false;
 };
 
-#endif // VEDIOTHREAD_H
+#endif // VIDEOTHREAD_H

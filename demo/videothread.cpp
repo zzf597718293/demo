@@ -1,10 +1,10 @@
-#include "vediothread.h"
+#include "videothread.h"
 
-VedioThread::VedioThread(QObject *parent) : QObject(parent)
+VideoThread::VideoThread(QObject *parent) : QObject(parent)
 {
     stopFlag = false;
 }
-void VedioThread::openCamera()
+void VideoThread::openCamera()
 {
     capture.open(0);
     if(!capture.isOpened())
@@ -13,9 +13,8 @@ void VedioThread::openCamera()
     }
 }
 
-void VedioThread::ThreadStart(QString path)
+void VideoThread::ThreadStart(QString path)
 {
-    int i=0;
     m_stop = false;
     cv::Size S = cv::Size((int)capture.get(cv::CAP_PROP_FRAME_WIDTH),(int)capture.get(cv::CAP_PROP_FRAME_HEIGHT));
     writer.open(path.toStdString(),cv::VideoWriter::fourcc('M','P','4','V'),30,S);
@@ -24,12 +23,14 @@ void VedioThread::ThreadStart(QString path)
         capture >> frame;
         writer.write(frame);
         cv::namedWindow("video", cv::WINDOW_NORMAL);
-        cv::imshow("video", frame);
+
+        //cv::imshow("video", frame);
         cv::waitKey(0);
+
     }
 }
 
-void VedioThread::ThreadStop()
+void VideoThread::ThreadStop()
 {
     //capture.release();
     writer.release();

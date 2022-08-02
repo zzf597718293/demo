@@ -22,7 +22,7 @@ SOURCES += \
     imageprocess.cpp \
     main.cpp \
     port.cpp \
-    vediothread.cpp \
+    videothread.cpp \
     widget.cpp
 
 HEADERS += \
@@ -32,7 +32,7 @@ HEADERS += \
     head.h \
     imageprocess.h \
     port.h \
-    vediothread.h \
+    videothread.h \
     widget.h
     head.h
 

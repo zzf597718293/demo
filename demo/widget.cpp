@@ -48,6 +48,22 @@ int Widget::getScreenIndex()
     return screenIndex;
 }
 
+Widget::controlEnable(bool canBeTrue)
+{
+    ui->btnMain->setEnabled(canBeTrue);
+    ui->btnData->setEnabled(canBeTrue);
+    ui->edtSerial->setEnabled(canBeTrue);
+    ui->edtChart->setEnabled(canBeTrue);
+    ui->edtBunk->setEnabled(canBeTrue);
+    ui->edtName->setEnabled(canBeTrue);
+    ui->cbGender->setEnabled(canBeTrue);
+    ui->edtAge->setEnabled(canBeTrue);
+    ui->comAttend->setEnabled(canBeTrue);
+    ui->comAssistant->setEnabled(canBeTrue);
+    ui->textEdit->setEnabled(canBeTrue);
+    ui->btnSave->setEnabled(canBeTrue);
+}
+
 void Widget::init()
 {
     setWindowFlags(Qt::FramelessWindowHint); //设置无边框
@@ -59,7 +75,7 @@ void Widget::init()
     ui->labelTitle->setPixmap(img);
 
     mainThread = new QThread(this);
-    myThread = new VedioThread;
+    myThread = new VideoThread;
     myThread->moveToThread(mainThread);
 
     childPortThread = new QThread(this);
@@ -71,10 +87,13 @@ void Widget::init()
         QMessageBox warnBox(QMessageBox::Warning,"警告","串口打开失败",QMessageBox::Yes);
         warnBox.exec();
     }
+    connect(port1,SIGNAL(sendData(QString)),this,SLOT(handleToCamera(QString)));
+
+
     dbPage = new DbPage(this);
     dbPage->showSystem();
     ui->edtImagePath->setText(dbPage->imagePath);
-    ui->edtVedioPath->setText(dbPage->vedioPath);
+    ui->edtVideoPath->setText(dbPage->videoPath);
     ui->label->setStyleSheet("QLabel{background-color:rgb(22,39,53);}");
     QSize icoSize(32, 32);
     int icoWidth = 85;
@@ -160,6 +179,16 @@ void Widget::getAssistant() //初始化助理医师
     {
         ui->comAssistant->addItem(*iter);
         ui->comAssistant_2->addItem(*iter);
+    }
+}
+
+void Widget::handleToCamera(QString recData)
+{
+    if(recData == "4B3A530D"){
+        on_btnScreenshots_clicked();
+    }
+    if(recData == "4B3A4C0D"){
+        on_btnStarRec_clicked();
     }
 }
 
@@ -254,15 +283,15 @@ void Widget::on_btnStarRec_clicked()
     mainThread->start();
     myThread->openCamera();
     QDateTime systime = QDateTime::currentDateTime(); //获得当前系统时间
-    QString str = ui->edtVedioPath->text();
+    QString str = ui->edtVideoPath->text();
     QString systimeDate = QString(str).append(systime.toString("yyyyMMddhhmmss")).append(".mp4"); //拼接保存路径
     //string path = systimeDate.toStdString();
-    dbPage->vedioName = systime.toString("yyyyMMddhhmmss");
-    dbPage->vedioPath = ui->edtImagePath->text();
+    dbPage->videoName = systime.toString("yyyyMMddhhmmss");
+    dbPage->videoPath = ui->edtImagePath->text();
     ui->btnStarRec->setEnabled(false);
     ui->btnStopRec->setEnabled(true);
     dbPage->startTime = QString(systime.toString("yyyy-MM-dd-hh:mm:ss"));
-    dbPage->saveVedioStart();
+    dbPage->saveVideoStart();
     myThread->ThreadStart(systimeDate);
 
 }
@@ -273,7 +302,7 @@ void Widget::on_btnStopRec_clicked()
     ui->btnStopRec->setEnabled(false);
     QDateTime systime = QDateTime::currentDateTime(); //获得当前系统时间
     dbPage->endTime = QString(systime.toString("yyyy-MM-dd-hh:mm:ss"));
-    dbPage->saveVedioEnd();
+    dbPage->saveVideoEnd();
     myThread->ThreadStop();
     mainThread->quit();
     mainThread->wait();
@@ -417,20 +446,20 @@ void Widget::on_choiceImagePath_clicked()
     ui->edtImagePath->setText(choiceDir);
 }
 
-void Widget::on_choiceVedioPath_clicked()
+void Widget::on_choiceVideoPath_clicked()
 {
     QString curPath = QCoreApplication::applicationDirPath();
     QString dlgTitle= "选择一个目录";
     QString choiceDir = QFileDialog::getExistingDirectory(this,dlgTitle,curPath,QFileDialog::ShowDirsOnly);
-    ui->edtVedioPath->setText(choiceDir);
+    ui->edtVideoPath->setText(choiceDir);
 }
 
 void Widget::on_btnSystemSave_clicked()
 {
-    dbPage->saveSystem(ui->edtImagePath->text(),ui->edtVedioPath->text());
+    dbPage->saveSystem(ui->edtImagePath->text(),ui->edtVideoPath->text());
     dbPage->showSystem();
     ui->edtImagePath->setText(dbPage->imagePath);
-    ui->edtVedioPath->setText(dbPage->vedioPath);
+    ui->edtVideoPath->setText(dbPage->videoPath);
 }
 
 void Widget::on_btnAttend_clicked()

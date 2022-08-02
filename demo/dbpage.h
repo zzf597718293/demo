@@ -20,8 +20,8 @@ public:
     void saveData();
     void saveSystem(QString,QString);
     void saveImage();
-    void saveVedioStart();
-    void saveVedioEnd();
+    void saveVideoStart();
+    void saveVideoEnd();
     void showSystem();
     void selectData(QString);
     void selectData(int);
@@ -34,8 +34,8 @@ public:
     QSqlQueryModel *qmodel;
     QString imageName;
     QString imagePath;      //图片路径
-    QString vedioName;
-    QString vedioPath;      //视频路径
+    QString videoName;
+    QString videoPath;      //视频路径
     QString startTime;
     QString endTime;
 private:

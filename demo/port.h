@@ -15,8 +15,9 @@ public:
     bool sendComm(int);
     char hexStrToChar(char);
 signals:
-
+    void sendData(QString string_data);
 private:
+    void receiveData();
     QStringList *m_serialPortName;
     QSerialPort *m_serialPort;
 };

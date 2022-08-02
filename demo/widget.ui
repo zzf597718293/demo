@@ -1713,14 +1713,14 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_29">
         <item>
-         <widget class="QPushButton" name="choiceVedioPath">
+         <widget class="QPushButton" name="choiceVideoPath">
           <property name="text">
            <string>视频路径</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="edtVedioPath"/>
+         <widget class="QLineEdit" name="edtVideoPath"/>
         </item>
        </layout>
       </widget>

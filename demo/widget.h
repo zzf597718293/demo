@@ -2,12 +2,13 @@
 #define WIDGET_H
 #include"port.h"
 #include"Dbpage.h"
-#include"vediothread.h"
+#include"videothread.h"
 #include"imageprocess.h"
 #include"doctorform.h"
 //#include "iconhelper.h"
 //#include "quihelper.h"
 #include <QWidget>
+#include<QSerialPort>
 #include<QThread>
 #include<QTimer>
 #include<QPushButton>
@@ -37,6 +38,7 @@ public:
     ~Widget();
     QRect getScreenRect(bool);
     int getScreenIndex();
+    controlEnable(bool);
 private:
 
     Ui::Widget *ui;
@@ -50,7 +52,7 @@ private:
     ImageProcess img;
     QTimer *timer;
     Port *port1;
-    VedioThread *myThread;
+    VideoThread *myThread;
     QThread *mainThread;
     QThread *childPortThread;
     QList<QString> columnNames; //字段名集合
@@ -61,10 +63,11 @@ private:
     void loadStyle();
     void getAttend();
     void getAssistant();
-    
+
 public slots:
     void videoOpen();
 private slots:
+    void handleToCamera(QString);
     void on_btnOn_clicked();
     void timer_out();
     void on_horizontalSlider_valueChanged(int value);
@@ -86,7 +89,7 @@ private slots:
 
     void on_btnSelect_clicked();
     void on_choiceImagePath_clicked();
-    void on_choiceVedioPath_clicked();
+    void on_choiceVideoPath_clicked();
     void on_btnSystemSave_clicked();
     void on_btnAttend_clicked();
     void on_btnAssistant_clicked();

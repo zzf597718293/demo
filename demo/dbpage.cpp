@@ -58,9 +58,9 @@ DbPage::DbPage(QObject *parent) : QObject(parent)
         qDebug() << "Table created!";
     }
     sqlQuery.clear();
-    createSql = QString("CREATE TABLE vedio (\
-                         vedioid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
-                         vedioname VARCHAR(20) NOT NULL,\
+    createSql = QString("CREATE TABLE video (\
+                         videoid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
+                         videoname VARCHAR(20) NOT NULL,\
                          starttime DATETIME,\
                          endtime DATETIME,\
                          path VARCHAR(100),\
@@ -100,7 +100,7 @@ DbPage::DbPage(QObject *parent) : QObject(parent)
     createSql = QString("CREATE TABLE system (\
                          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
                          imagepath VARCHAR(255),\
-                         vediopath VARCHAR(255)\
+                         videopath VARCHAR(255)\
                          )");
     sqlQuery.prepare(createSql);
 
@@ -146,7 +146,7 @@ DbPage::DbPage(QObject *parent) : QObject(parent)
     qmodel->setQuery("SELECT * FROM patient AS p "
                      "INNER JOIN serial AS s "
                      "ON p.chartnum = s.chartnum "
-                     "INNER JOIN vedio AS v "
+                     "INNER JOIN video AS v "
                      "ON v.chartnum = s.chartnum "
                      "INNER JOIN image AS i "
                      "ON s.chartnum = i.chartnum ");
@@ -227,7 +227,7 @@ void DbPage::saveData()
     */
 }
 
-void DbPage::saveSystem(QString imagepath,QString vediopath)
+void DbPage::saveSystem(QString imagepath,QString videopath)
 {
     if (QSqlDatabase::contains("qt_sqldefault_connection"))
     {
@@ -249,10 +249,10 @@ void DbPage::saveSystem(QString imagepath,QString vediopath)
     QSqlQuery sqlQuery;
     sqlQuery.exec("SELECT id FROM system WHERE id=1");
     if(!sqlQuery.next()){
-        sqlQuery.prepare("INSERT INTO system VALUES(:id,:imagepath,:vediopath)");
+        sqlQuery.prepare("INSERT INTO system VALUES(:id,:imagepath,:videopath)");
         sqlQuery.bindValue(":id",1);
         sqlQuery.bindValue(":imagepath",imagepath);
-        sqlQuery.bindValue(":vediopath",vediopath);
+        sqlQuery.bindValue(":videopath",videopath);
         if(!sqlQuery.exec())
         {
 
@@ -260,10 +260,10 @@ void DbPage::saveSystem(QString imagepath,QString vediopath)
     }
     else
     {
-        sqlQuery.prepare("UPDATE system SET id=:id,imagepath=:imagepath,vediopath=:vediopath");
+        sqlQuery.prepare("UPDATE system SET id=:id,imagepath=:imagepath,videopath=:videopath");
         sqlQuery.bindValue(":id",1);
         sqlQuery.bindValue(":imagepath",imagepath);
-        sqlQuery.bindValue(":vediopath",vediopath);
+        sqlQuery.bindValue(":videopath",videopath);
             if(!sqlQuery.exec())
             {
                 QMessageBox warnBox(QMessageBox::Warning,"警告","内容",QMessageBox::Yes);
@@ -291,31 +291,31 @@ void DbPage::saveImage()
     }
 }
 
-void DbPage::saveVedioStart()
+void DbPage::saveVideoStart()
 {
     QSqlQuery sqlQuery;
-    sqlQuery.prepare("INSERT INTO vedio (vedioname,starttime,path,chartnum,serialnum) VALUES(:vedioname,:starttime,:path,:chartnum,:serialnum)");
-    sqlQuery.bindValue(":vedioname",vedioName);
+    sqlQuery.prepare("INSERT INTO video (videoname,starttime,path,chartnum,serialnum) VALUES(:videoname,:starttime,:path,:chartnum,:serialnum)");
+    sqlQuery.bindValue(":videoname",videoName);
     sqlQuery.bindValue(":starttime",startTime);
-    sqlQuery.bindValue(":path",vedioPath);
+    sqlQuery.bindValue(":path",videoPath);
     sqlQuery.bindValue(":chartnum",chartNum);
     sqlQuery.bindValue(":serialnum",serialNum);
     if(!sqlQuery.exec())
     {
-        QMessageBox warnBox(QMessageBox::Warning,"警告","vedio表添加失败",QMessageBox::Yes);
+        QMessageBox warnBox(QMessageBox::Warning,"警告","video表添加失败",QMessageBox::Yes);
         warnBox.exec();
         return;
     }
 }
 
-void DbPage::saveVedioEnd()
+void DbPage::saveVideoEnd()
 {
     QSqlQuery sqlQuery;
-    sqlQuery.prepare("UPDATE vedio SET endtime=:endtime WHERE vedioname = "+vedioName+"");
+    sqlQuery.prepare("UPDATE video SET endtime=:endtime WHERE videoname = "+videoName+"");
     sqlQuery.bindValue(":endtime",endTime);
     if(!sqlQuery.exec())
     {
-        QMessageBox warnBox(QMessageBox::Warning,"警告","vedio表添加失败",QMessageBox::Yes);
+        QMessageBox warnBox(QMessageBox::Warning,"警告","video表添加失败",QMessageBox::Yes);
         warnBox.exec();
         return;
     }
@@ -327,12 +327,12 @@ void DbPage::showSystem()
     sqlQuery.exec("SELECT * FROM system WHERE id=1");
     sqlQuery.next();
     imagePath = sqlQuery.value(1).toString();
-    vedioPath = sqlQuery.value(2).toString();
+    videoPath = sqlQuery.value(2).toString();
 }
 
 void DbPage::selectData(QString str)
 {
-    qmodel->setQuery("SELECT * FROM patient AS p INNER JOIN serial AS s ON p.chartnum = s.chartnum INNER JOIN vedio AS v INNER JOIN image AS i WHERE p.name LIKE '%"+str+"%'");
+    qmodel->setQuery("SELECT * FROM patient AS p INNER JOIN serial AS s ON p.chartnum = s.chartnum INNER JOIN video AS v INNER JOIN image AS i WHERE p.name LIKE '%"+str+"%'");
     setTitle();
 }
 
@@ -342,7 +342,7 @@ void DbPage::selectData(int x)
     qmodel->setQuery("SELECT * FROM patient AS p "
                      "INNER JOIN serial AS s "
                      "ON p.chartnum = s.chartnum "
-                     "INNER JOIN vedio AS v "
+                     "INNER JOIN video AS v "
                      "INNER JOIN image AS i "
                      " WHERE s.serialnum = "+str+"");
     setTitle();

@@ -3,7 +3,7 @@
 Port::Port(QObject *parent) : QObject(parent)
 {
     m_serialPort = new QSerialPort();
-
+    connect(m_serialPort,&QSerialPort::readyRead,this,&Port::receiveData);
 }
 Port::~Port()
 {
@@ -11,7 +11,6 @@ Port::~Port()
 }
 bool Port::openCom()
 {
-    //bool bTrue = false;
     if (m_serialPort->isOpen())
     {
         m_serialPort->clear();
@@ -90,4 +89,11 @@ char Port::hexStrToChar(char data)
     } else {
         return (-1);
     }
+}
+
+void Port::receiveData()
+{
+    QByteArray byte_data = m_serialPort->readAll();
+    QString string_data = byte_data.toHex().toUpper();
+    emit sendData(string_data);
 }
