@@ -23,9 +23,8 @@ void VideoThread::ThreadStart(QString path)
         capture >> frame;
         writer.write(frame);
         cv::namedWindow("video", cv::WINDOW_NORMAL);
-
-        //cv::imshow("video", frame);
-        cv::waitKey(0);
+        cv::imshow("video", frame);
+        cv::waitKey(33);
 
     }
 }

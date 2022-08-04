@@ -14,8 +14,12 @@ Widget::~Widget()
 {
 
     vid.release();
-    delete ui;
+    childPortThread->quit();
+    childPortThread->wait();
+    delete  port1;
     delete myThread;
+    delete ui;
+
 
 }
 
@@ -77,7 +81,7 @@ void Widget::init()
     mainThread = new QThread(this);
     myThread = new VideoThread;
     myThread->moveToThread(mainThread);
-
+    connect(ui->btnStarRec,SIGNAL(clicked()),SLOT(myThread->ThreadStart()));
     childPortThread = new QThread(this);
     port1 = new Port();
     port1->moveToThread(childPortThread);
@@ -122,6 +126,8 @@ void Widget::init()
     ui->btnData->setIcon(QIcon(":/main_data.png"));
     ui->btnConfig->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     ui->btnConfig->setIcon(QIcon(":/main_config.png"));
+
+    connect(ui->tableView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(showVideoReplay(QModelIndex)));
 }
 
 void Widget::loadStyle()
@@ -219,6 +225,19 @@ void Widget::videoOpen()
    //cv::waitKey(0);
 }
 
+void Widget::showVideoReplay(const QModelIndex &index) //传入表格中，被双击行的index
+{ 
+    QSqlRecord record = dbPage->qmodel->record(index.row()); //获取该行的所有字段信息
+    QString strName = record.value(9).toString(); //获取视频开始时间字段信息
+    strName = strName.remove(4,1).remove(6,1).remove(8,1).remove(10,1).remove(12,1);
+    QString strPath = record.value(11).toString();
+    VideoPlay *videoplay = new VideoPlay;
+    videoThread = new QThread(this);
+    videoplay->setWindowModality(Qt::ApplicationModal);
+    videoplay->show();
+    videoplay->getVideoName(strName,strPath);
+}
+
 void Widget::on_btnOn_clicked()
 {
     vid.open(0);        //打开摄像头
@@ -232,7 +251,6 @@ void Widget::on_btnOn_clicked()
     ui->btnOff->setEnabled(true);
     ui->btnScreenshots->setEnabled(true);
     ui->btnStarRec->setEnabled(true);
-    ui->btnStopRec->setEnabled(true);
     ui->sliderBright->setEnabled(true);
     ui->sliderContrast->setEnabled(true);
     ui->sliderSaturation->setEnabled(true);
@@ -260,10 +278,12 @@ void Widget::on_horizontalSlider_valueChanged(int value)
 void Widget::on_btnOff_clicked()
 {
     timer->stop(); //关闭串口释放资源
-    delete  port1;
     vid.release();
     ui->btnOff->setEnabled(false);
     ui->btnOn->setEnabled(true);
+    ui->btnStarRec->setEnabled(false);
+    ui->btnStopRec->setEnabled(false);
+    ui->btnScreenshots->setEnabled(false);
 }
 
 void Widget::on_btnScreenshots_clicked()
@@ -410,6 +430,7 @@ void Widget::on_btnData_clicked()
     ui->tableView->setColumnWidth(11,150);
     ui->tableView->setColumnWidth(12,150);
     ui->tableView->resizeColumnsToContents();
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->show();
 }
 
@@ -436,6 +457,10 @@ void Widget::on_btnSelect_clicked()
     {
         dbPage->selectData(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt());
     }
+    ui->tableView->setColumnWidth(9,150);
+    ui->tableView->setColumnWidth(10,150);
+    ui->tableView->setColumnWidth(11,150);
+    ui->tableView->setColumnWidth(12,150);
 }
 
 void Widget::on_choiceImagePath_clicked()

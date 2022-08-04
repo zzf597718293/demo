@@ -1,12 +1,11 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 #include"port.h"
+#include"videoplay.h"
 #include"Dbpage.h"
 #include"videothread.h"
 #include"imageprocess.h"
 #include"doctorform.h"
-//#include "iconhelper.h"
-//#include "quihelper.h"
 #include <QWidget>
 #include<QSerialPort>
 #include<QThread>
@@ -19,6 +18,7 @@
 #include<QString>
 #include<vector>
 #include<QMessageBox>
+#include<QDebug>
 #include<opencv2/core/core.hpp>
 #include<opencv2/highgui/highgui.hpp>
 #include<opencv2/imgproc/imgproc.hpp>
@@ -55,6 +55,7 @@ private:
     VideoThread *myThread;
     QThread *mainThread;
     QThread *childPortThread;
+    QThread *videoThread;
     QList<QString> columnNames; //字段名集合
     QList<int> columnWidths;    //字段宽度集合
     DbPage *dbPage;
@@ -67,6 +68,7 @@ private:
 public slots:
     void videoOpen();
 private slots:
+    void showVideoReplay(const QModelIndex &);
     void handleToCamera(QString);
     void on_btnOn_clicked();
     void timer_out();

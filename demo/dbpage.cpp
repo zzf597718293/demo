@@ -343,7 +343,9 @@ void DbPage::selectData(int x)
                      "INNER JOIN serial AS s "
                      "ON p.chartnum = s.chartnum "
                      "INNER JOIN video AS v "
+                     "ON v.chartnum = s.chartnum "
                      "INNER JOIN image AS i "
+                     "ON s.chartnum = i.chartnum"
                      " WHERE s.serialnum = "+str+"");
     setTitle();
 }

@@ -22,6 +22,7 @@ SOURCES += \
     imageprocess.cpp \
     main.cpp \
     port.cpp \
+    videoplay.cpp \
     videothread.cpp \
     widget.cpp
 
@@ -32,12 +33,14 @@ HEADERS += \
     head.h \
     imageprocess.h \
     port.h \
+    videoplay.h \
     videothread.h \
     widget.h
     head.h
 
 FORMS += \
     doctorform.ui \
+    videoplay.ui \
     widget.ui
 
 #RESOURCES   += $$PWD/../core_qss/qss.qrc
@@ -58,9 +61,6 @@ INCLUDEPATH += C:\opencv\opencv-build\install\include
 LIBS += C:\opencv\opencv-build\lib\libopencv_*.a
 
 RESOURCES += \
-    ../../Downloads/QWidgetDemo-master/ui/core_qss/qss.qrc \
-    ../../Downloads/QWidgetDemo-master/ui/core_qss/qss.qrc \
-    ../../Downloads/QWidgetDemo-master/ui/uidemo08/other/main.qrc \
     image.qrc \
     style.qrc
 

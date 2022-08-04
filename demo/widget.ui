@@ -838,11 +838,11 @@
             <enum>Qt::Horizontal</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Expanding</enum>
+            <enum>QSizePolicy::Fixed</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>40</width>
+             <width>20</width>
              <height>20</height>
             </size>
            </property>
@@ -850,25 +850,6 @@
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_2">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>亮度</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="1">
             <widget class="QSlider" name="sliderBright">
              <property name="enabled">
@@ -891,6 +872,47 @@
              </property>
              <property name="value">
               <number>2</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>60</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>亮度</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QSlider" name="horizontalSlider_4">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>200</width>
+               <height>16777215</height>
+              </size>
              </property>
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
@@ -941,11 +963,8 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
-            <widget class="QSlider" name="horizontalSlider_4">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -954,12 +973,12 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>200</width>
+               <width>60</width>
                <height>16777215</height>
               </size>
              </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+             <property name="text">
+              <string>对比度</string>
              </property>
             </widget>
            </item>
@@ -991,37 +1010,8 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="1">
-            <widget class="QSlider" name="sliderWhiteBalance">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="0" colspan="2">
-            <widget class="QLabel" name="label_7">
-             <property name="text">
-              <string>低通滤波</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_3">
+           <item row="7" column="0">
+            <widget class="QLabel" name="label_6">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1035,7 +1025,7 @@
               </size>
              </property>
              <property name="text">
-              <string>对比度</string>
+              <string>白平衡</string>
              </property>
             </widget>
            </item>
@@ -1058,8 +1048,11 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_6">
+           <item row="7" column="1">
+            <widget class="QSlider" name="sliderWhiteBalance">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1068,16 +1061,29 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>60</width>
+               <width>200</width>
                <height>16777215</height>
               </size>
              </property>
-             <property name="text">
-              <string>白平衡</string>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_22">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
