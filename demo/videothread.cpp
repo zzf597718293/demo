@@ -17,11 +17,14 @@ void VideoThread::ThreadStart(QString path)
 {
     m_stop = false;
     cv::Size S = cv::Size((int)capture.get(cv::CAP_PROP_FRAME_WIDTH),(int)capture.get(cv::CAP_PROP_FRAME_HEIGHT));
-    writer.open(path.toStdString(),cv::VideoWriter::fourcc('M','P','4','V'),30,S);
+    writer.open(path.toStdString(),cv::VideoWriter::fourcc('M','P','4','V'),30/4,S);
     while(!m_stop)
     {
         capture >> frame;
+        frame = img.ImageCV(frame);
+        frame.convertTo(frame,CV_8UC3,255.0);
         writer.write(frame);
+
         cv::namedWindow("video", cv::WINDOW_NORMAL);
         cv::imshow("video", frame);
         cv::waitKey(33);

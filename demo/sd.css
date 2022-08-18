@@ -1,5 +1,8 @@
 QPalette{background:#EAF7FF;}*{outline:0px;color:#386487;}
+QLabel#labelTime{
+color:#00a6e4;
 
+}
 QToolButton{
 border:0px solid #DCDCDC;
 border-radius:0px;
@@ -10,5 +13,86 @@ QToolButton:hover{
     background:#C0DCF2;
 }
 
+QPushButton:hover{
+background:#C0DCF2;
+}
 
+QSlider::groove:horizontal{
+height:8px;
+border-radius:4px;
+background:#DEF0FE;
+}
 
+QSlider::add-page:horizontal{
+height:8px;
+border-radius:4px;
+background:#DEF0FE;
+}
+
+QSlider::sub-page:horizontal{
+height:8px;
+border-radius:4px;
+background:#4682B4;
+}
+
+QSlider::handle:horizontal{
+width:13px;
+margin-top:-3px;
+margin-bottom:-3px;
+border-radius:6px;
+background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #EAF7FF,stop:0.8 #00a6e4);
+}
+
+QSlider::groove:vertical{
+width:8px;
+border-radius:4px;
+background:#DEF0FE;
+}
+
+QSlider::add-page:vertical{
+width:8px;
+border-radius:4px;
+background:#00a6e4;
+}
+
+QSlider::sub-page:vertical{
+width:8px;
+border-radius:4px;
+background:#DEF0FE;
+}
+
+QSlider::handle:vertical{
+height:14px;
+margin-left:-3px;
+margin-right:-3px;
+border-radius:6px;
+background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #EAF7FF,stop:0.8 #00a6e4);
+}
+.QPushButton{
+border-style:none;
+border:1px solid #4682B4;
+color:#386487;
+padding:5px;
+border-radius:5px;
+}
+.QToolButton{
+border-style:none;
+border:1px solid #C0DCF2;
+color:#386487;
+padding:5px;
+border-radius:5px;
+
+}
+QLabel{
+font-family:Microsoft Yahei;
+color:#00a6e4;
+font:13pt;
+}
+QLineEdit{
+border:1px solid #4682B4;
+border-radius:2px;
+}
+QComboBox{
+border:1px solid #4682B4;
+border-radius:2px;
+}

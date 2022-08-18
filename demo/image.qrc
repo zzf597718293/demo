@@ -9,5 +9,11 @@
         <file>main_help.png</file>
         <file>main_main.png</file>
         <file>main_person.png</file>
+        <file>video_play.png</file>
+        <file>video_stop.png</file>
+        <file>Maximize.png</file>
+        <file>Minimize.png</file>
+        <file>Shutdown-1.png</file>
+        <file>icon.rc</file>
     </qresource>
 </RCC>

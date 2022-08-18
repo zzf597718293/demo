@@ -11,15 +11,17 @@ class Port : public QObject
 public:
     explicit Port(QObject *parent = nullptr);
     ~Port();
-    bool openCom();
+    bool openCom(QString);
     bool sendComm(int);
+    bool sendTime(QString);
     char hexStrToChar(char);
+    QStringList *m_serialPortName;
+    QSerialPort *m_serialPort;
 signals:
     void sendData(QString string_data);
 private:
     void receiveData();
-    QStringList *m_serialPortName;
-    QSerialPort *m_serialPort;
+
 };
 
 

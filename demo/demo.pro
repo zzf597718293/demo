@@ -1,4 +1,4 @@
-QT       += core gui serialport sql
+QT       += core gui serialport sql multimedia multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,6 +22,7 @@ SOURCES += \
     imageprocess.cpp \
     main.cpp \
     port.cpp \
+    screenshot.cpp \
     videoplay.cpp \
     videothread.cpp \
     widget.cpp
@@ -33,6 +34,7 @@ HEADERS += \
     head.h \
     imageprocess.h \
     port.h \
+    screenshot.h \
     videoplay.h \
     videothread.h \
     widget.h
@@ -40,6 +42,7 @@ HEADERS += \
 
 FORMS += \
     doctorform.ui \
+    screenshot.ui \
     videoplay.ui \
     widget.ui
 
@@ -65,3 +68,4 @@ RESOURCES += \
     style.qrc
 
 DISTFILES +=
+RC_FILE = icon.rc

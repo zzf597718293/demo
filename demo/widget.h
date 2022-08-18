@@ -2,12 +2,14 @@
 #define WIDGET_H
 #include"port.h"
 #include"videoplay.h"
+#include"screenshot.h"
 #include"Dbpage.h"
 #include"videothread.h"
 #include"imageprocess.h"
 #include"doctorform.h"
 #include <QWidget>
 #include<QSerialPort>
+#include<QSerialPortInfo>
 #include<QThread>
 #include<QTimer>
 #include<QPushButton>
@@ -19,6 +21,7 @@
 #include<vector>
 #include<QMessageBox>
 #include<QDebug>
+#include<QStatusBar>
 #include<opencv2/core/core.hpp>
 #include<opencv2/highgui/highgui.hpp>
 #include<opencv2/imgproc/imgproc.hpp>
@@ -39,9 +42,16 @@ public:
     QRect getScreenRect(bool);
     int getScreenIndex();
     controlEnable(bool);
+protected:
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
 private:
 
     Ui::Widget *ui;
+    QStatusBar *statusBar;
+    QLabel *labelSerial;
+    QLabel *labelUsedtime;
     int bright = 0;
     float alpha;
     float beta =1;
@@ -51,7 +61,11 @@ private:
     cv::Mat frame1;
     ImageProcess img;
     QTimer *timer;
+    QTimer *timerPort;
+    QTimer *realTime;
     Port *port1;
+    VideoPlay *videoplay;
+    Screenshot *screenshot;
     VideoThread *myThread;
     QThread *mainThread;
     QThread *childPortThread;
@@ -59,15 +73,23 @@ private:
     QList<QString> columnNames; //字段名集合
     QList<int> columnWidths;    //字段宽度集合
     DbPage *dbPage;
-
+    bool videoIsStart = true;
+    bool m_bDrag;
+    QPoint mouseStartPoint;
+    QPoint windowTopLeftPoint;
+    int videoOrImg;  //1:v 0:i
     void init();
     void loadStyle();
     void getAttend();
     void getAssistant();
+    void readSerial();
+    void readTime();
 
 public slots:
     void videoOpen();
+    void showTime();
 private slots:
+
     void showVideoReplay(const QModelIndex &);
     void handleToCamera(QString);
     void on_btnOn_clicked();
@@ -89,7 +111,7 @@ private slots:
     void on_btnConfig_clicked();
     void on_btnData_clicked();
 
-    void on_btnSelect_clicked();
+    void on_btnSelectVideo_clicked();
     void on_choiceImagePath_clicked();
     void on_choiceVideoPath_clicked();
     void on_btnSystemSave_clicked();
@@ -97,6 +119,15 @@ private slots:
     void on_btnAssistant_clicked();
     void on_btnMenu_Max_clicked();
     void on_btnMenu_Min_clicked();
+
+    void on_btnPortSearch_clicked();
+
+    void on_btnOpenPort_clicked();
+    void on_btnReadSerial_clicked();
+    void on_selectAgeMin_textChanged(const QString &arg1);
+
+    void on_selectAgeMax_textChanged(const QString &arg1);
+    void on_btnSelectImg_clicked();
 
 };
 

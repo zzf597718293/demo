@@ -9,14 +9,14 @@ Port::~Port()
 {
     delete m_serialPort;
 }
-bool Port::openCom()
+bool Port::openCom(QString com)
 {
     if (m_serialPort->isOpen())
     {
         m_serialPort->clear();
         m_serialPort->close();
     }
-    m_serialPort->setPortName("COM3");
+    m_serialPort->setPortName(com);
     if(!m_serialPort->open(QIODevice::ReadWrite))
     {
         return false;
@@ -27,6 +27,7 @@ bool Port::openCom()
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
     m_serialPort->setParity(QSerialPort::NoParity);
     m_serialPort->setStopBits(QSerialPort::OneStop);
+    m_serialPort->setDataTerminalReady(true);
     return true;
 }
 
@@ -59,6 +60,50 @@ bool Port::sendComm(int value)
         }
 
         lstr = temp.at(i).toLatin1();
+        hexdata = hexStrToChar(hstr);
+        lowhexdata = hexStrToChar(lstr);
+
+        if ((hexdata == 16) || (lowhexdata == 16)) {
+            break;
+        } else {
+            hexdata = hexdata * 16 + lowhexdata;
+        }
+
+        i++;
+        senddata[hexdatalen] = (char)hexdata;
+        hexdatalen++;
+    }
+
+    senddata.resize(hexdatalen);
+
+    m_serialPort->write(senddata);
+}
+
+bool Port::sendTime(QString time)
+{
+    QString str;
+
+    str = "54 3A "+time+" 0D";
+    QByteArray senddata;
+    int hexdata, lowhexdata;
+    int hexdatalen = 0;
+    int len = str.length();
+    senddata.resize(len / 2);
+    char lstr, hstr;
+
+    for (int i = 0; i < len;) {
+        hstr = str.at(i).toLatin1();
+        if (hstr == ' ') {
+            i++;
+            continue;
+        }
+
+        i++;
+        if (i >= len) {
+            break;
+        }
+
+        lstr = str.at(i).toLatin1();
         hexdata = hexStrToChar(hstr);
         lowhexdata = hexStrToChar(lstr);
 

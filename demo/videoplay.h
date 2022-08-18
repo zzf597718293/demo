@@ -3,6 +3,9 @@
 #include"imageprocess.h"
 #include <QWidget>
 #include<iostream>
+#include<QMediaPlayer>
+#include<QMediaPlaylist>
+#include<QVideoWidget>
 #include<QTimer>
 #include<QDebug>
 #include<opencv2/core/core.hpp>
@@ -27,14 +30,27 @@ public:
     explicit VideoPlay(QWidget *parent = nullptr);
     ~VideoPlay();
     void getVideoName(QString,QString);
+
 private:
     Ui::VideoPlay *ui;
     QTimer *timer;
     cv::Mat frame;
     cv::VideoCapture video;
-    ImageProcess img;
+    ImageProcess *img;
+    int videoFrames = 0;
+    bool isStop = true;
+    QMediaPlayer *myplayer;
+    QMediaPlaylist *myplayerlist;
+    QVideoWidget *mywidget;
 private slots:
-    importFrame();
+    void mediaStateChanged(QMediaPlayer::State state);
+    void positionChanged(qint64 position);
+    void durationChanged(qint64 duration);
+    void setPosition(int position);
+    void on_videoSlider_sliderMoved(int position);
+    void on_btnVideoPalay_clicked();
+signals:
+    sendFrames(int);
 };
 
 #endif // VIDEOPLAY_H

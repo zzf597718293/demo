@@ -64,7 +64,7 @@ void doctorForm::on_btnDelet_clicked()
        QModelIndex index = qmodel->index(curIndex.row(),0);
        //QString = index.data.toString();
        QSqlQuery sqlQuery;
-       sqlQuery.prepare("DELETE FROM attend WHERE attendname = "+index.data().toString()+" ");
+       sqlQuery.prepare("DELETE FROM attend WHERE attendname = '"+index.data().toString()+"' ");
        sqlQuery.exec();
        qmodel->setQuery("SELECT attendname FROM attend");
     }
@@ -77,7 +77,7 @@ void doctorForm::on_btnDelet_clicked()
        QModelIndex index = qmodel->index(curIndex.row(),0);
        //QString = index.data.toString();
        QSqlQuery sqlQuery;
-       sqlQuery.prepare("DELETE FROM assistant WHERE assistantname = "+index.data().toString()+" ");
+       sqlQuery.prepare("DELETE FROM assistant WHERE assistantname = '"+index.data().toString()+"' ");
        sqlQuery.exec();
        qmodel->setQuery("SELECT assistantname FROM assistant");
     }

@@ -18,15 +18,14 @@ public:
     ~DbPage();
 
     void saveData();
-    void saveSystem(QString,QString);
+    void saveSystem(QString,QString,int,int,int,int);
     void saveImage();
     void saveVideoStart();
     void saveVideoEnd();
     void showSystem();
-    void selectData(QString);
-    void selectData(int);
-    void selectData(QString,int,int);
-    void setTitle();
+    void selectVideo(QString,QString,int);
+    void selectImg(QString,QString,int);
+    void setTitle(int);
     void selectAttend(QString);
     void selectAssistant(QString);
     QList<QString> showAttend();
@@ -34,6 +33,10 @@ public:
     QSqlQueryModel *qmodel;
     QString imageName;
     QString imagePath;      //图片路径
+    int bright;
+    int contrast;
+    int chroma;
+    int saturation;
     QString videoName;
     QString videoPath;      //视频路径
     QString startTime;
@@ -47,7 +50,7 @@ private:
     QList<int> columnWidths;    //列宽集合
     QTableView *tableView;
 
-    int chartNum;           //病历号
+    QString chartNum;       //病历号
     QString serialNum;      //流水号
     QString bunkNum;        //床位号
     QString name;           //姓名
@@ -61,7 +64,7 @@ private:
 signals:
 
 public slots:
-    void setChartnum(const int&);
+    void setChartnum(const QString&);
     void setSerialnum(const QString&);
     void setBunknum(const QString&);
     void setName(const QString&);

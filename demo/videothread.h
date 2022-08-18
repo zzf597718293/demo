@@ -1,5 +1,6 @@
 #ifndef VIDEOTHREAD_H
 #define VIDEOTHREAD_H
+#include"imageprocess.h"
 #include<QThread>
 #include<QTimer>
 #include<QPushButton>
@@ -29,6 +30,7 @@ public:
 protected:
 
 private:
+    ImageProcess img;
     bool m_stop;
     QString path;
     cv::VideoCapture capture;

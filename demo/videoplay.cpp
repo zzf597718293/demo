@@ -6,42 +6,77 @@ VideoPlay::VideoPlay(QWidget *parent) :
     ui(new Ui::VideoPlay)
 {
     ui->setupUi(this);
-    timer = new QTimer(this);
-    connect(timer,SIGNAL(timeout()),this,SLOT(importFrame()));
-
+    setWindowTitle("视频回放");
+    img = new ImageProcess;
+    myplayer = new QMediaPlayer(this);
+    mywidget = new QVideoWidget(ui->labelVideo);
+    mywidget->resize(ui->labelVideo->size());
+    myplayer->setVideoOutput(mywidget);
+    ui->videoSlider->setRange(0, 0);
+    connect(myplayer, &QMediaPlayer::positionChanged, this, &VideoPlay::positionChanged);
+    connect(myplayer, &QMediaPlayer::durationChanged, this, &VideoPlay::durationChanged);
+    setAttribute(Qt::WA_DeleteOnClose);
+    connect(this,SIGNAL(sendFrames(int)),ui->videoSlider,SLOT(setValue(int)));
 }
 
 VideoPlay::~VideoPlay()
 {
+    myplayer->stop();
+    delete mywidget;
+    video.release();
+    delete img;
     delete ui;
+
 }
 
 void VideoPlay::getVideoName(QString name, QString path)
 {
-
- string str ="D:/20220802101128.mp4";
- //string str=path.toStdString()+name.toStdString()+".mp4";
- video.open(str);
- int frames = int(video.get(cv::CAP_PROP_FRAME_COUNT));
- qDebug()<<frames;
- timer->start(33);
+    //QString str ="D:/trailer.mp4";
+   // myplayer->setMedia(QUrl::fromLocalFile(str));
+string str=path.toStdString()+name.toStdString()+".mp4";
+myplayer->setMedia(QUrl::fromLocalFile(QString::fromStdString(str)));
 }
 
-VideoPlay::importFrame()
+void VideoPlay::on_videoSlider_sliderMoved(int position)
 {
-    video >> frame;
-    if(frame.empty()){
-     timer->stop();
-     video.release();
-     return 0;
-    }
-    frame=img.ImageCV(frame);
-    cv::cvtColor(frame,frame,cv::COLOR_BGR2RGB);
-    frame.convertTo(frame,CV_8UC3,255.0);
-    //cv::cvtColor(frame, frame, CV_BGR2RGB);//only RGB of Qt
-    QImage srcQImage =QImage(frame.data,frame.cols,frame.rows,frame.step,QImage::Format_RGB888);
-    ui->labelVideo->setPixmap(QPixmap::fromImage(srcQImage));
-    ui->labelVideo->resize(srcQImage.size());
-    ui->labelVideo->show();
+    setPosition(position);
+}
 
+void VideoPlay::on_btnVideoPalay_clicked()
+{
+    if(isStop){
+        ui->btnVideoPalay->setStyleSheet("QPushButton#btnVideoPalay{border-image:url(:/video_stop.png)}");
+        isStop = false;
+        myplayer->play();
+    }else{
+        ui->btnVideoPalay->setStyleSheet("QPushButton#btnVideoPalay{border-image:url(:/video_play.png)}");
+        isStop = true;
+        myplayer->pause();
+    }
+}
+void VideoPlay::mediaStateChanged(QMediaPlayer::State state)
+{
+    switch(state) {
+    case QMediaPlayer::PlayingState:
+        ui->btnVideoPalay->setStyleSheet("QPushButton#btnVideoPalay{border-image:url(:/video_stop.png)}");
+        break;
+    default:
+        ui->btnVideoPalay->setStyleSheet("QPushButton#btnVideoPalay{border-image:url(:/video_play.png)}");
+        break;
+    }
+}
+
+void VideoPlay::positionChanged(qint64 position)
+{
+    ui->videoSlider->setValue(position);
+}
+
+void VideoPlay::durationChanged(qint64 duration)
+{
+    ui->videoSlider->setMaximum(duration);
+}
+
+void VideoPlay::setPosition(int position)
+{
+    myplayer->setPosition(position);
 }
