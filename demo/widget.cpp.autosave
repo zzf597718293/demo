@@ -295,7 +295,6 @@ void Widget::videoOpen()
 
    frame2 = img.ImageBright(frame1,beta/10,alpha*10); //调整亮度和对比度函数
    frame3 = img.ImageSaturation(frame2,saturation);    //调整饱和度函数
-
    frame4 = img.ImageCV(frame3);
    //frame3 = imgPro(frame);
    //cv::cvtColor(frame4,frame4,CV_BGR2RGB);

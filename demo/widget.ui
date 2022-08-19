@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1191</width>
-    <height>708</height>
+    <width>1284</width>
+    <height>946</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -921,22 +921,6 @@
            </item>
            <item>
             <layout class="QGridLayout" name="gridLayout_4">
-             <item row="0" column="2">
-              <widget class="QPushButton" name="btnScreenshots">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>截图</string>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="1">
               <widget class="QPushButton" name="btnOff">
                <property name="enabled">
@@ -950,6 +934,22 @@
                </property>
                <property name="text">
                 <string>关</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QPushButton" name="btnScreenshots">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>截图</string>
                </property>
               </widget>
              </item>
@@ -1199,25 +1199,6 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>白平衡</string>
-             </property>
-            </widget>
-           </item>
            <item row="5" column="0">
             <widget class="QLabel" name="label_5">
              <property name="sizePolicy">
@@ -1238,24 +1219,9 @@
             </widget>
            </item>
            <item row="7" column="1">
-            <widget class="QSlider" name="sliderWhiteBalance">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+            <widget class="QCheckBox" name="CbWhiteBalance">
+             <property name="text">
+              <string>自动白平衡</string>
              </property>
             </widget>
            </item>
@@ -1898,8 +1864,8 @@
       <widget class="QPushButton" name="btnSystemSave">
        <property name="geometry">
         <rect>
-         <x>40</x>
-         <y>560</y>
+         <x>110</x>
+         <y>550</y>
          <width>91</width>
          <height>25</height>
         </rect>
@@ -2028,34 +1994,34 @@
       <widget class="QPushButton" name="btnAttend">
        <property name="geometry">
         <rect>
-         <x>20</x>
-         <y>190</y>
-         <width>75</width>
+         <x>30</x>
+         <y>360</y>
+         <width>101</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>主治医师</string>
+        <string>添加主治医师</string>
        </property>
       </widget>
       <widget class="QPushButton" name="btnAssistant">
        <property name="geometry">
         <rect>
-         <x>120</x>
-         <y>190</y>
-         <width>75</width>
+         <x>150</x>
+         <y>360</y>
+         <width>91</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>助理医师</string>
+        <string>添加助理医师</string>
        </property>
       </widget>
       <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>230</y>
+         <x>20</x>
+         <y>130</y>
          <width>341</width>
          <height>211</height>
         </rect>

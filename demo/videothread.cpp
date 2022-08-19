@@ -25,8 +25,8 @@ void VideoThread::ThreadStart(QString path)
         frame.convertTo(frame,CV_8UC3,255.0);
         writer.write(frame);
 
-        cv::namedWindow("video", cv::WINDOW_NORMAL);
-        cv::imshow("video", frame);
+        //cv::namedWindow("video", cv::WINDOW_NORMAL);
+        cv::imshow("video ", frame);
         cv::waitKey(33);
 
     }

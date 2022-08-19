@@ -111,8 +111,10 @@ cv::Mat ImageProcess::ImageCV(cv::Mat image)
         My_DFT(channels.at(i-1), image_output, image_transform);
         //cv::imshow("image_output", image_output);
 
-        cv::line(image_transform, cv::Point(0, image_transform.size().height / 2), cv::Point(image_transform.size().width/2-10, image_transform.size().height / 2), cv::Scalar(0, 0, 255),4);
-        cv::line(image_transform, cv::Point(image_transform.size().width/2+10, image_transform.size().height / 2), cv::Point(image_transform.size().width, image_transform.size().height / 2), cv::Scalar(0, 0, 255),4);
+        //cv::line(image_transform, cv::Point(0, image_transform.size().height / 2), cv::Point(image_transform.size().width/2-20, image_transform.size().height / 2), cv::Scalar(0, 0, 255),4);
+        //cv::line(image_transform, cv::Point(image_transform.size().width/2+20, image_transform.size().height / 2), cv::Point(image_transform.size().width, image_transform.size().height / 2), cv::Scalar(0, 0, 255),4);
+        cv::circle(image_transform,cv::Point(100,200),15,cv::Scalar(0, 0, 255),-1,cv::LINE_AA);
+        cv::circle(image_transform,cv::Point(300,200),15,cv::Scalar(0, 0, 255),-1,cv::LINE_AA);
         //cv::imshow("22", image_output);
         //3、傅里叶逆变换
         cv::Mat iDft[] = { cv::Mat_<float>(image_transform), cv::Mat::zeros(image_transform.size(),CV_32F) };
@@ -132,6 +134,35 @@ cv::Mat ImageProcess::ImageCV(cv::Mat image)
     //cv::imshow("i12", image_transform);
     //cv::waitKey(0);
     return image_transform;
+}
+
+cv::Mat ImageProcess::ImageWhitebalance(cv::Mat frame)
+{
+    vector<cv::Mat> imageRGB;
+
+        //RGB三通道分离
+        cv::split(frame, imageRGB);
+
+        //求原始图像的RGB分量的均值
+        double R, G, B;
+        B = cv::mean(imageRGB[0])[0];
+        G = cv::mean(imageRGB[1])[0];
+        R = cv::mean(imageRGB[2])[0];
+
+        //需要调整的RGB分量的增益
+        double KR, KG, KB;
+        KB = (R + G + B) / (3 * B);
+        KG = (R + G + B) / (3 * G);
+        KR = (R + G + B) / (3 * R);
+
+        //调整RGB三个通道各自的值
+        imageRGB[0] = imageRGB[0] * KB;
+        imageRGB[1] = imageRGB[1] * KG;
+        imageRGB[2] = imageRGB[2] * KR;
+
+        //RGB三通道图像合并
+        cv::merge(imageRGB, frame);
+        return frame;
 }
 
 void ImageProcess::My_DFT(cv::Mat input_image, cv::Mat& output_image, cv::Mat& transform_image)
