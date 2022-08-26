@@ -31,7 +31,7 @@ database.setDatabaseName("MyDataBase.db");
                                 chartnum VARCHAR(100) UNIQUE NOT NULL,\
                                 name VARCHAR(10) NOT NULL,\
                                 age INTEGER NOT NULL,\
-                                gender INTEGER NOT NULL \
+                                gender VARCHAR(1) NOT NULL \
                                 )");
     sqlQuery.prepare(createSql);
 
@@ -46,12 +46,12 @@ database.setDatabaseName("MyDataBase.db");
     sqlQuery.clear();
     createSql = QString("CREATE TABLE serial (\
                          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
-                         serialnum VARCHAR(100) ,\
+                         serialnum VARCHAR(100) UNIQUE NOT NULL,\
                          bunknum VARCHAR(10) NOT NULL,\
                          attend VARCHAR(10) NOT NULL,\
                          assistant VARCHAR(10) NOT NULL,\
                          remark TEXT,\
-                         chartnum VARCHAR(100) UNIQUE NOT NULL \
+                         chartnum VARCHAR(100)  NOT NULL \
                          )");
     sqlQuery.prepare(createSql);
 
@@ -152,16 +152,6 @@ database.setDatabaseName("MyDataBase.db");
     {
         qDebug() << "Table created!";
     }
-
-//    qmodel->setQuery("SELECT * FROM patient AS p "
-//                     "INNER JOIN serial AS s "
-//                     "ON p.chartnum = s.chartnum "
-//                     "INNER JOIN video AS v "
-//                     "ON v.chartnum = s.chartnum "
-//                     "INNER JOIN image AS i "
-//                     "ON s.chartnum = i.chartnum ");
-
-//    setTitle();
 }
 
 DbPage::~DbPage()
@@ -172,92 +162,54 @@ DbPage::~DbPage()
 void DbPage::saveData()
 
 {
-    bool canBeSave = true;
-//    if (QSqlDatabase::contains("qt_sqldefault_connection"))
-//    {
-//        database = QSqlDatabase::database("qt_sql_default_connection");
-//    }
-//    else
-//    {
-//        database = QSqlDatabase::addDatabase("QSQLITE");
-
-//        database.setDatabaseName("MyDataBase.db");
-//    }
-
-//    if (!database.open())
-//    {
-//        QMessageBox warnBox(QMessageBox::Warning,"警告","数据库打开失败",QMessageBox::Yes);
-//        warnBox.exec();
-//        return;
-//    }
-
     QSqlQuery sqlQuery;
-    sqlQuery.prepare("INSERT INTO patient (chartnum,name,age,gender)VALUES(:chartnum,:name,:age,:gender)");
-    sqlQuery.bindValue(":chartnum",chartNum);
-    sqlQuery.bindValue(":name",name);
-    sqlQuery.bindValue(":age",age);
-    sqlQuery.bindValue(":gender",gender);
-    if(!sqlQuery.exec())
-    {
-        qDebug() <<  sqlQuery.lastError();
-        QMessageBox warnBox(QMessageBox::Warning,"警告","patient表添加失败",QMessageBox::Yes);
+    sqlQuery.exec("SELECT chartnum From serial WHERE serialnum='"+serialNum+"'");
+    sqlQuery.first();
+    if(sqlQuery.value(0).toString()==serialNum){
+        QMessageBox warnBox(QMessageBox::Warning,"警告","流水号已存在，请添加一个新的流水号！",QMessageBox::Yes);
         warnBox.exec();
         return;
-    }
+    }else{
+        sqlQuery.exec("SELECT chartnum From patient WHERE chartnum='"+chartNum+"'");
+        sqlQuery.first();
+        if(sqlQuery.value(0).toString()==chartNum){
+            //Do Nothing
+        }else{
+            sqlQuery.prepare("INSERT INTO patient (chartnum,name,age,gender)VALUES(:chartnum,:name,:age,:gender)");
+            sqlQuery.bindValue(":chartnum",chartNum);
+            sqlQuery.bindValue(":name",name);
+            sqlQuery.bindValue(":age",age);
+            sqlQuery.bindValue(":gender",gender);
+            if(!sqlQuery.exec()){
+                qDebug() <<  sqlQuery.lastError();
+                QMessageBox warnBox(QMessageBox::Warning,"警告","patient表添加失败",QMessageBox::Yes);
+                warnBox.exec();
+                return;
+                }
+            }
+         sqlQuery.clear();
+         sqlQuery.prepare("INSERT INTO serial (serialnum,bunknum,attend,assistant,remark,chartnum)VALUES(:serialnum,:bunknum,:attend,:assistant,:remark,:chartnum)");
+         sqlQuery.bindValue(":serialnum",serialNum);
+         sqlQuery.bindValue(":bunknum",bunkNum);
+         sqlQuery.bindValue(":attend",attendName);
+         sqlQuery.bindValue(":assistant",assistantName);
+         sqlQuery.bindValue(":remark",remark);
+         sqlQuery.bindValue(":chartnum",chartNum);
 
-    sqlQuery.clear();
-    sqlQuery.prepare("INSERT INTO serial (serialnum,bunknum,attend,assistant,remark,chartnum)VALUES(:serialnum,:bunknum,:attend,:assistant,:remark,:chartnum)");
-    sqlQuery.bindValue(":serialnum",serialNum);
-    sqlQuery.bindValue(":bunknum",bunkNum);
-    sqlQuery.bindValue(":attend",attendName);
-    sqlQuery.bindValue(":assistant",assistantName);
-    sqlQuery.bindValue(":remark",remark);
-    sqlQuery.bindValue(":chartnum",chartNum);
-
-    if(!sqlQuery.exec())
-    {
-        qDebug() <<  sqlQuery.lastError();
-        QMessageBox warnBox(QMessageBox::Warning,"警告","serial表添加失败",QMessageBox::Yes);
-        warnBox.exec();
-        return;
-    }
-
-    /*sqlQuery.clear();
-    sqlQuery.prepare("INSERT INTO image VALUES(:imagename,:path,:chartnum,:serialnum)");
-    sqlQuery.bindValue(":imagename","");
-    sqlQuery.bindValue(":path","");
-    sqlQuery.bindValue(":chartnum",chartNum);
-    sqlQuery.bindValue(":serialnum",serialNum);
-
-
-    if(!sqlQuery.exec())
-    {
-        QMessageBox warnBox(QMessageBox::Warning,"警告","image表添加失败",QMessageBox::Yes);
-        warnBox.exec();
-        return;
-    }
-    */
+         if(!sqlQuery.exec()){
+             qDebug() <<  sqlQuery.lastError();
+             QMessageBox warnBox(QMessageBox::Warning,"警告","serial表添加失败",QMessageBox::Yes);
+             warnBox.exec();
+             return;
+         }
+        }
+    QMessageBox warnBox(QMessageBox::Information,"提示","保存成功",QMessageBox::Yes);
+    warnBox.exec();
 }
 
 void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contrast,int chroma,int saturation)
 {
-//    if (QSqlDatabase::contains("qt_sqldefault_connection"))
-//    {
-//        database = QSqlDatabase::database("qt_sql_default_connection");
-//    }
-//    else
-//    {
-//        database = QSqlDatabase::addDatabase("QSQLITE");
 
-//        database.setDatabaseName("MyDataBase.db");
-//    }
-
-//    if (!database.open())
-//    {
-//        QMessageBox warnBox(QMessageBox::Warning,"警告","数据库打开失败",QMessageBox::Yes);
-//        warnBox.exec();
-//        return;
-//    }
     QSqlQuery sqlQuery;
     sqlQuery.exec("SELECT id FROM system WHERE id=1");
     if(!sqlQuery.next()){
@@ -362,7 +314,7 @@ void DbPage::selectVideo(QString str,QString type,int videoOrImg)
                         "INNER JOIN serial AS s "
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN video AS v "
-                        "ON v.chartnum = s.chartnum "
+                        "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
                         " WHERE p.chartnum = '"+str+"'");
     }
     if(type=="Serial"){
@@ -370,7 +322,7 @@ void DbPage::selectVideo(QString str,QString type,int videoOrImg)
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
-                         "ON v.chartnum = s.chartnum "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
                          " WHERE s.serialnum = '"+str+"'");
     }
     if(type=="Name"){
@@ -402,7 +354,7 @@ void DbPage::selectImg(QString str,QString type,int videoOrImg)
                         "INNER JOIN serial AS s "
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN image AS i "
-                        "ON i.chartnum = s.chartnum "
+                        "ON i.chartnum = s.chartnum AND i.serialnum = s.serialnum"
                         " WHERE p.chartnum = '"+str+"'");
     }
     if(type=="Serial"){
@@ -410,7 +362,7 @@ void DbPage::selectImg(QString str,QString type,int videoOrImg)
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN image AS i "
-                         "ON i.chartnum = s.chartnum "
+                         "ON i.chartnum = s.chartnum AND i.serialnum = s.serialnum"
                          " WHERE s.serialnum = '"+str+"'");
     }
     if(type=="Name"){
@@ -456,7 +408,7 @@ void DbPage::setName(const QString &name)
     this->name = name;
 }
 
-void DbPage::setGender(const int &gender)
+void DbPage::setGender(const QString &gender)
 {
     this->gender = gender;
 }
@@ -562,6 +514,56 @@ void DbPage::selectAssistant(QString name)
     }
 }
 
+void DbPage::upDatePatien(QString chartnum,QString serial, QString chart, QString bunk, QString name, QString gender, int age, QString attend, QString assistant, QString remark)
+{
+     QSqlQuery sqlQuery;
+     sqlQuery.prepare("UPDATE video SET chartnum=:chartnum WHERE serialnum='"+serial+"'");
+     sqlQuery.bindValue(":chartnum",chart);
+     sqlQuery.exec();
+     sqlQuery.prepare("UPDATE serial SET chartnum=:chartnum,bunknum=:bunknum,attend=:attend,assistant=:assistant,remark=:remark WHERE serialnum='"+serial+"'");
+     sqlQuery.bindValue(":chartnum",chart);
+     sqlQuery.bindValue(":bunknum",bunk);
+     sqlQuery.bindValue(":attend",attend);
+     sqlQuery.bindValue(":assistant",assistant);
+     sqlQuery.bindValue(":remark",remark);
+     sqlQuery.exec();
+     sqlQuery.prepare("UPDATE image SET chartnum=:chartnum WHERE serialnum='"+serial+"'");
+     sqlQuery.bindValue(":chartnum",chart);
+     sqlQuery.exec();
+     sqlQuery.prepare("UPDATE patient SET chartnum=:chartnum,name=:name,age=:age,gender=:gender WHERE chartnum='"+chartnum+"'");
+     sqlQuery.bindValue(":chartnum",chart);
+     sqlQuery.bindValue(":name",name);
+     sqlQuery.bindValue(":age",age);
+     sqlQuery.bindValue(":gender",gender);
+     sqlQuery.exec();
+
+}
+
+void DbPage::deletePatien(QString serial)
+{
+    QSqlQuery sqlQuery;
+    sqlQuery.prepare("DELETE FROM video WHERE serialnum ='"+serial+"'");
+    sqlQuery.exec();
+    sqlQuery.prepare("DELETE FROM image WHERE serialnum ='"+serial+"'");
+    sqlQuery.exec();
+}
+
+void DbPage::deleteImage(QString imageName)
+{
+    QSqlQuery sqlQuery;
+    sqlQuery.prepare("DELETE FROM image WHERE imagename ='"+imageName+"'");
+    sqlQuery.exec();
+}
+
+QString DbPage::getImagePath(QString imageName)
+{
+    QSqlQuery sqlQuery;
+    sqlQuery.prepare("SELECT path FROM image WHERE imagename ='"+imageName+"'");
+    sqlQuery.exec();
+    sqlQuery.first();
+    return sqlQuery.value(0).toString();
+}
+
 QList<QString> DbPage::showAttend()     //遍历attend(主治医师)表 存到List中
 {
     QList<QString> attendList;
@@ -584,4 +586,25 @@ QList<QString> DbPage::showAssistant() //遍历assistant(助理医师)表 存到
         assistantList.append(sqlQuery.value("assistantname").toString());
     }
     return assistantList;
+}
+
+int DbPage::getSerialAmount(QString str)
+{
+    QSqlQuery sqlQuery;
+    sqlQuery.prepare("SELECT COUNT(serialnum) from serial where serialnum like '"+str+"'");
+    sqlQuery.exec();
+    sqlQuery.first();
+    return sqlQuery.value(0).toInt();
+}
+
+QList<QString> DbPage::getImageList()
+{
+    QList<QString> imageList;
+    QSqlQuery sqlQuery;
+    sqlQuery.prepare("SELECT imagename from image where serialnum = '"+serialNum+"'");
+    sqlQuery.exec();
+    while(sqlQuery.next()){
+        imageList.append(sqlQuery.value(0).toString());
+    }
+    return imageList;
 }

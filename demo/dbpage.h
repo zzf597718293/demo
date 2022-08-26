@@ -28,8 +28,14 @@ public:
     void setTitle(int);
     void selectAttend(QString);
     void selectAssistant(QString);
+    void upDatePatien(QString, QString, QString, QString, QString, QString, int, QString, QString, QString);
+    void deletePatien(QString);
+    void deleteImage(QString);
+    QString getImagePath(QString);
     QList<QString> showAttend();
     QList<QString> showAssistant();
+    int getSerialAmount(QString); //接收当前日期YYYYMMhh在数据库中模糊查询个数并返回
+    QList<QString> getImageList();
     QSqlQueryModel *qmodel;
     QString imageName;
     QString imagePath;      //图片路径
@@ -43,18 +49,14 @@ public:
     QString endTime;
 private:
     QSqlDatabase database;
-
-
-
     QList<QString> columnNames; //列名集合
     QList<int> columnWidths;    //列宽集合
     QTableView *tableView;
-
     QString chartNum;       //病历号
     QString serialNum;      //流水号
     QString bunkNum;        //床位号
     QString name;           //姓名
-    int gender;             //性别
+    QString gender;             //性别
     int age;                //年龄
     QString attendName;     //主治医师
     QString assistantName;  //助理医师
@@ -68,7 +70,7 @@ public slots:
     void setSerialnum(const QString&);
     void setBunknum(const QString&);
     void setName(const QString&);
-    void setGender(const int&);
+    void setGender(const QString&);
     void setAge(const int&);
     void setAttendName(const QString&);
     void setAssistantName(const QString&);

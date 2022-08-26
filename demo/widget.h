@@ -84,7 +84,7 @@ private:
     void getAssistant();
     void readSerial();
     void readTime();
-
+    QString autoSerial(); //自动生成流水号
 public slots:
     void videoOpen();
     void showTime();
@@ -129,6 +129,8 @@ private slots:
     void on_selectAgeMax_textChanged(const QString &arg1);
     void on_btnSelectImg_clicked();
 
+    void on_btnClear_clicked();
+    void on_btnAdd_clicked();
 };
 
 

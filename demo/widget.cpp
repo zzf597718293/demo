@@ -149,7 +149,7 @@ void Widget::init()
     ui->btnData->setIcon(QIcon(":/main_data.png"));
     ui->btnConfig->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     ui->btnConfig->setIcon(QIcon(":/main_config.png"));
-
+    ui->edtSerial->setText(autoSerial());
 
     connect(ui->tableView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(showVideoReplay(QModelIndex)));
     loadStyle();           //设置全局样式
@@ -229,6 +229,15 @@ void Widget::readTime()
 
 }
 
+QString Widget::autoSerial()
+{
+    QDateTime time = QDateTime::currentDateTime();
+    QString str = time.toString("yyyyMMdd%");
+    int num = dbPage->getSerialAmount(str);
+    str = time.toString("yyyyMMdd");
+    return str+QString("%1").arg(num+1,4,10,QChar('0'));
+}
+
 void Widget::showTime()
 {
     QDateTime time = QDateTime::currentDateTime();
@@ -295,7 +304,6 @@ void Widget::videoOpen()
 
    frame2 = img.ImageBright(frame1,beta/10,alpha*10); //调整亮度和对比度函数
    frame3 = img.ImageSaturation(frame2,saturation);    //调整饱和度函数
-
    frame4 = img.ImageCV(frame3);
    //frame3 = imgPro(frame);
    //cv::cvtColor(frame4,frame4,CV_BGR2RGB);
@@ -322,9 +330,11 @@ void Widget::showVideoReplay(const QModelIndex &index) //传入表格中，被�
         QString strPath = record.value(11).toString();
         videoplay = new VideoPlay;
         videoThread = new QThread(this);
+        videoplay->imgPath = record.value(11).toString();
         videoplay->setWindowModality(Qt::ApplicationModal);
         videoplay->show();
         videoplay->getVideoName(strName,strPath);
+        videoplay->getPatienInfo(record.value(4).toString(),record.value(0).toString(),record.value(5).toString(),record.value(1).toString(),record.value(3).toString(),record.value(2).toInt(),record.value(6).toString(),record.value(7).toString(),record.value(8).toString());
     }else{
         QString strName = record.value(9).toString(); //获取视频开始时间字段信息
         QString strPath = record.value(10).toString();
@@ -498,10 +508,7 @@ void Widget::on_btnSave_clicked()
     dbPage->setSerialnum(ui->edtSerial->text());
     dbPage->setBunknum(ui->edtBunk->text());
     dbPage->setName(ui->edtName->text());
-    if(ui->cbGender->currentText() == '男')
-    dbPage->setGender(1);
-    else
-    dbPage->setGender(0);
+    dbPage->setGender(ui->cbGender->currentText());
     dbPage->setAge(ui->edtAge->text().toInt());
     dbPage->setAttendName(ui->comAttend->currentText());
     dbPage->setAssistantName(ui->comAssistant->currentText());
@@ -752,3 +759,22 @@ void Widget::on_btnSelectImg_clicked()
 }
 
 
+
+void Widget::on_btnClear_clicked()
+{
+    ui->edtChart->setText("");
+    ui->edtBunk->setText("");
+    ui->edtName->setText("");
+    ui->edtAge->setValue(1);
+    ui->textEdit->setText("");
+}
+
+void Widget::on_btnAdd_clicked()
+{
+    ui->edtSerial->setText(autoSerial());
+    ui->edtChart->setText("");
+    ui->edtBunk->setText("");
+    ui->edtName->setText("");
+    ui->edtAge->setValue(1);
+    ui->textEdit->setText("");
+}
