@@ -23,7 +23,9 @@ public:
     void saveVideoStart();
     void saveVideoEnd();
     void showSystem();
-    void selectVideo(QString,QString,int);
+    int selectVideo(QString,QString,int,int page = 0);
+    int selectVideo(QString,QString,QString,int,int page = 0);
+    int selectVideo(QString,int,int,QString,int,int page = 0);
     void selectImg(QString,QString,int);
     void setTitle(int);
     void selectAttend(QString);
@@ -47,6 +49,9 @@ public:
     QString videoPath;      //视频路径
     QString startTime;
     QString endTime;
+    int total = 0;            //数据总数
+    int totalPage = 0;        //总页数
+    int nowPage = 0;          //当前页
 private:
     QSqlDatabase database;
     QList<QString> columnNames; //列名集合

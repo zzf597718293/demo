@@ -65,6 +65,7 @@ void doctorForm::on_btnDelet_clicked()
        //QString = index.data.toString();
        QSqlQuery sqlQuery;
        sqlQuery.prepare("DELETE FROM attend WHERE attendname = '"+index.data().toString()+"' ");
+       qDebug()<<index.data().toString();
        sqlQuery.exec();
        qmodel->setQuery("SELECT attendname FROM attend");
     }

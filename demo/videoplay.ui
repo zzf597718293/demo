@@ -861,12 +861,12 @@
     <string>11111111111111</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>1330</x>
-     <y>60</y>
-     <width>341</width>
+     <x>1360</x>
+     <y>50</y>
+     <width>241</width>
      <height>194</height>
     </rect>
    </property>

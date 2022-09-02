@@ -46,7 +46,7 @@ VideoPlay::~VideoPlay()
 {
     myplayer->stop();
     delete mywidget;
-    video.release();
+    //video.release();
     delete img;
     delete ui;
 
@@ -71,6 +71,8 @@ void VideoPlay::getPatienInfo(QString serial, QString chart, QString bunk, QStri
     ui->edtAge->setValue(age);
     ui->comAttend->addItem(attend);
     ui->comAssistant->addItem(assistant);
+    ui->comAttend->setCurrentIndex(ui->comAttend->count()-1);
+    ui->comAssistant->setCurrentIndex(ui->comAssistant->count()-1);
     ui->textEdit->setText(remark);
     dbPage->setChartnum(ui->edtChart->text());
     dbPage->setSerialnum(ui->edtSerial->text());

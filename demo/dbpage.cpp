@@ -205,6 +205,30 @@ void DbPage::saveData()
         }
     QMessageBox warnBox(QMessageBox::Information,"提示","保存成功",QMessageBox::Yes);
     warnBox.exec();
+//    for(int i=100;i<100000;i++){
+//        sqlQuery.prepare("INSERT INTO patient (chartnum,name,age,gender)VALUES(:chartnum,:name,:age,:gender)");
+//        sqlQuery.bindValue(":chartnum",QString::number(i));
+//        sqlQuery.bindValue(":name",QString::number(i));
+//        sqlQuery.bindValue(":age",i);
+//        sqlQuery.bindValue(":gender","男");
+//        sqlQuery.exec();
+//        sqlQuery.prepare("INSERT INTO serial (serialnum,bunknum,attend,assistant,remark,chartnum)VALUES(:serialnum,:bunknum,:attend,:assistant,:remark,:chartnum)");
+//        sqlQuery.bindValue(":serialnum",QString::number(i));
+//        sqlQuery.bindValue(":bunknum",QString::number(i));
+//        sqlQuery.bindValue(":attend",QString::number(i));
+//        sqlQuery.bindValue(":assistant",QString::number(i));
+//        sqlQuery.bindValue(":remark",QString::number(i));
+//        sqlQuery.bindValue(":chartnum",QString::number(i));
+//        sqlQuery.exec();
+//        sqlQuery.prepare("INSERT INTO video (videoname,starttime,endtime,path,chartnum,serialnum)VALUES(:videoname,:starttime,:endtime,:path,:chartnum,:serialnum)");
+//        sqlQuery.bindValue(":videoname",QString::number(i));
+//        sqlQuery.bindValue(":starttime",QString::number(i));
+//        sqlQuery.bindValue(":endtime",QString::number(i));
+//        sqlQuery.bindValue(":path",QString::number(i));
+//        sqlQuery.bindValue(":chartnum",QString::number(i));
+//        sqlQuery.bindValue(":serialnum",QString::number(i));
+//        sqlQuery.exec();
+//    }
 }
 
 void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contrast,int chroma,int saturation)
@@ -307,15 +331,37 @@ void DbPage::showSystem()
     saturation = sqlQuery.value(6).toInt();
 }
 
-void DbPage::selectVideo(QString str,QString type,int videoOrImg)
+int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
 {
+    int total=0;
+
     if(type=="Chart"){
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE p.chartnum = '"+str+"'");
+
+       while(qmodel->canFetchMore()){
+           qmodel->fetchMore();
+       }
+       total = qmodel->rowCount();
        qmodel->setQuery("SELECT * FROM patient AS p "
                         "INNER JOIN serial AS s "
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN video AS v "
                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                        " WHERE p.chartnum = '"+str+"'");
+                        " WHERE p.chartnum = '"+str+"' LIMIT 0,20");
+       if(page > 0){
+       QString sql = QString("SELECT * FROM patient AS p "
+                             "INNER JOIN serial AS s "
+                             "ON p.chartnum = s.chartnum "
+                             "INNER JOIN video AS v "
+                             "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                             " WHERE p.chartnum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+       qmodel->setQuery(sql);
+       }
     }
     if(type=="Serial"){
         qmodel->setQuery("SELECT * FROM patient AS p "
@@ -324,27 +370,187 @@ void DbPage::selectVideo(QString str,QString type,int videoOrImg)
                          "INNER JOIN video AS v "
                          "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
                          " WHERE s.serialnum = '"+str+"'");
+        while(qmodel->canFetchMore()){
+            qmodel->fetchMore();
+        }
+        qDebug()<<qmodel->rowCount();
+        total = qmodel->rowCount();
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE p.chartnum = '"+str+"' LIMIT 0,20");
+        if(page > 0){
+        QString sql = QString("SELECT * FROM patient AS p "
+                              "INNER JOIN serial AS s "
+                              "ON p.chartnum = s.chartnum "
+                              "INNER JOIN video AS v "
+                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                              " WHERE p.chartnum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+        qmodel->setQuery(sql);
+        }
+
     }
     if(type=="Name"){
-        qmodel->setQuery("SELECT * FROM patient AS p INNER JOIN serial AS s ON p.chartnum = s.chartnum INNER JOIN video AS v INNER JOIN image AS i WHERE p.name LIKE '%"+str+"%'");
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum "
+                         "WHERE p.name LIKE '%"+str+"%'");
+        while(qmodel->canFetchMore()){
+            qmodel->fetchMore();
+        }
+        total = qmodel->rowCount();
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE p.name LIKE '%"+str+"%' LIMIT 0,20");
+        if(page > 0){
+        QString sql = QString("SELECT * FROM patient AS p "
+                              "INNER JOIN serial AS s "
+                              "ON p.chartnum = s.chartnum "
+                              "INNER JOIN video AS v "
+                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                              " WHERE p.name LIKE '%"+str+"%' LIMIT %1,20").arg((page-1)*20);
+        qmodel->setQuery(sql);
+        }
     }
     if(type=="Bunk"){
         qmodel->setQuery("SELECT * FROM patient AS p "
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
-                         "ON v.chartnum = s.chartnum "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
                          " WHERE s.bunknum = '"+str+"'");
+        while(qmodel->canFetchMore()){
+            qmodel->fetchMore();
+        }
+        total = qmodel->rowCount();
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE s.bunknum = '"+str+"' LIMIT 0,20");
+        if(page > 0){
+        QString sql = QString("SELECT * FROM patient AS p "
+                              "INNER JOIN serial AS s "
+                              "ON p.chartnum = s.chartnum "
+                              "INNER JOIN video AS v "
+                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                              " WHERE s.bunknum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+        qmodel->setQuery(sql);
+        }
     }
     if(type=="Remark"){
         qmodel->setQuery("SELECT * FROM patient AS p "
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
-                         "ON v.chartnum = s.chartnum "
-                         " WHERE s.remark = '"+str+"'");
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE s.remark LIKE '%"+str+"%'");
+        while(qmodel->canFetchMore()){
+            qmodel->fetchMore();
+        }
+        total = qmodel->rowCount();
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE s.remark LIKE '%"+str+"%' LIMIT 0,20");
+        if(page > 0){
+        QString sql = QString("SELECT * FROM patient AS p "
+                              "INNER JOIN serial AS s "
+                              "ON p.chartnum = s.chartnum "
+                              "INNER JOIN video AS v "
+                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                              " WHERE s.remark LIKE '%"+str+"%' LIMIT %1,20").arg((page-1)*20);
+        qmodel->setQuery(sql);
+        }
     }
     setTitle(videoOrImg);
+    return total;
+
+}
+
+int DbPage::selectVideo(QString attend, QString assistant, QString type, int videoOrImg, int page)
+{
+    int total=0;
+
+    if(type=="doctor"){
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN video AS v "
+                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                         " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"'");
+
+       while(qmodel->canFetchMore()){
+           qmodel->fetchMore();
+       }
+       total = qmodel->rowCount();
+       qmodel->setQuery("SELECT * FROM patient AS p "
+                        "INNER JOIN serial AS s "
+                        "ON p.chartnum = s.chartnum "
+                        "INNER JOIN video AS v "
+                        "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                        " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' LIMIT 0,20");
+       if(page > 0){
+       QString sql = QString("SELECT * FROM patient AS p "
+                             "INNER JOIN serial AS s "
+                             "ON p.chartnum = s.chartnum "
+                             "INNER JOIN video AS v "
+                             "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                             " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' LIMIT %1,20").arg((page-1)*20);
+       qmodel->setQuery(sql);
+       }
+    }
+    setTitle(videoOrImg);
+    return total;
+}
+
+int DbPage::selectVideo(QString name, int minAge, int maxAge, QString type, int videoOrImg, int page)
+{
+    int total=0;
+
+    if(type=="patien"){
+        QString str =QString("SELECT * FROM patient AS p "
+                     "INNER JOIN serial AS s "
+                     "ON p.chartnum = s.chartnum "
+                     "INNER JOIN video AS v "
+                     "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                     " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2").arg(minAge).arg(maxAge);
+        qmodel->setQuery(str);
+
+       while(qmodel->canFetchMore()){
+           qmodel->fetchMore();
+       }
+       total = qmodel->rowCount();
+       str = QString("SELECT * FROM patient AS p "
+                    "INNER JOIN serial AS s "
+                    "ON p.chartnum = s.chartnum "
+                    "INNER JOIN video AS v "
+                    "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                    " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 LIMIT 0,20").arg(minAge).arg(maxAge);
+       qmodel->setQuery(str);
+       if(page > 0){
+           str = QString("SELECT * FROM patient AS p "
+                        "INNER JOIN serial AS s "
+                        "ON p.chartnum = s.chartnum "
+                        "INNER JOIN video AS v "
+                        "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
+                        " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 LIMIT %3,20").arg(minAge).arg(maxAge).arg((page-1)*20);
+
+       qmodel->setQuery(str);
+       }
+    }
+    setTitle(videoOrImg);
+    return total;
 }
 
 void DbPage::selectImg(QString str,QString type,int videoOrImg)
@@ -366,14 +572,19 @@ void DbPage::selectImg(QString str,QString type,int videoOrImg)
                          " WHERE s.serialnum = '"+str+"'");
     }
     if(type=="Name"){
-        qmodel->setQuery("SELECT * FROM patient AS p INNER JOIN serial AS s ON p.chartnum = s.chartnum INNER JOIN video AS v INNER JOIN image AS i WHERE p.name LIKE '%"+str+"%'");
+        qmodel->setQuery("SELECT * FROM patient AS p "
+                         "INNER JOIN serial AS s "
+                         "ON p.chartnum = s.chartnum "
+                         "INNER JOIN image AS i "
+                         "ON i.chartnum = s.chartnum AND i.serialnum = s.serialnum "
+                         "WHERE p.name LIKE '%"+str+"%'");
     }
     if(type=="Bunk"){
         qmodel->setQuery("SELECT * FROM patient AS p "
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN image AS i "
-                         "ON i.chartnum = s.chartnum "
+                         "ON i.chartnum = s.chartnum AND i.serialnum = s.serialnum"
                          " WHERE s.bunknum = '"+str+"'");
     }
     if(type=="Remark"){
@@ -381,8 +592,8 @@ void DbPage::selectImg(QString str,QString type,int videoOrImg)
                          "INNER JOIN serial AS s "
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN image AS i "
-                         "ON i.chartnum = s.chartnum "
-                         " WHERE s.remark = '"+str+"'");
+                         "ON i.chartnum = s.chartnum AND i.serialnum = s.serialnum"
+                         " WHERE s.remark LIKE '%"+str+"%'");
     }
     setTitle(videoOrImg);
 }

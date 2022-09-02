@@ -94,7 +94,7 @@ private slots:
     void handleToCamera(QString);
     void on_btnOn_clicked();
     void timer_out();
-    void on_horizontalSlider_valueChanged(int value);
+    void on_LEDSlider_valueChanged(int value);
     void on_btnOff_clicked();
 
     void on_btnScreenshots_clicked();
@@ -131,6 +131,10 @@ private slots:
 
     void on_btnClear_clicked();
     void on_btnAdd_clicked();
+    void on_btnNext_clicked();
+    void on_btnPrevious_clicked();
+    void on_btnFirst_clicked();
+    void on_btnLast_clicked();
 };
 
 

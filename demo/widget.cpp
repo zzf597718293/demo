@@ -111,6 +111,7 @@ void Widget::init()
     ui->slider_Contrast->setValue(dbPage->contrast);
     ui->slider_Chroma->setValue(dbPage->chroma);
     ui->slider_Saturation->setValue(dbPage->saturation);
+    ui->LEDSlider->setEnabled(false);
     ui->label->setStyleSheet("QLabel{background-color:rgb(22,39,53);}");
     QSize icoSize(32, 32);
     int icoWidth = 85;
@@ -128,10 +129,10 @@ void Widget::init()
     ui->cbGender->addItem("女");
     ui->cbGender_2->addItem("男");
     ui->cbGender_2->addItem("女");
-    ui->comAssistant->addItem("");
-    ui->comAttend->addItem("");
-    ui->comAssistant_2->addItem("");
-    ui->comAttend_2->addItem("");
+    ui->comAssistant->setEditText("");
+    ui->comAttend->setEditText("");
+    ui->comAssistant_2->setEditText("");
+    ui->comAttend_2->setEditText("");
     timer = new QTimer(this);    //初始化定时器用于摄像头的实时显示
     getAttend();
     getAssistant();
@@ -151,6 +152,13 @@ void Widget::init()
     ui->btnConfig->setIcon(QIcon(":/main_config.png"));
     ui->edtSerial->setText(autoSerial());
 
+    ui->btnNext->setEnabled(false);
+    ui->btnPrevious->setEnabled(false);
+    ui->btnFirst->setEnabled(false);
+    ui->btnLast->setEnabled(false);
+    ui->labNowPage->setVisible(false);
+    ui->labTotal->setVisible(false);
+    ui->labTotalPage->setVisible(false);
     connect(ui->tableView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(showVideoReplay(QModelIndex)));
     loadStyle();           //设置全局样式
 }
@@ -359,6 +367,7 @@ void Widget::on_btnOn_clicked()
     ui->sliderBright->setEnabled(true);
     ui->sliderContrast->setEnabled(true);
     ui->sliderSaturation->setEnabled(true);
+    ui->LEDSlider->setEnabled(true);
     //摄像头未开启时各项参数不可调整
 
     }
@@ -375,7 +384,7 @@ void Widget::timer_out()
     videoOpen();
 }
 
-void Widget::on_horizontalSlider_valueChanged(int value)
+void Widget::on_LEDSlider_valueChanged(int value)
 {
     port1->sendComm(value);  //Slider的值每次改变都通过串口下发相应亮度值
 }
@@ -389,6 +398,7 @@ void Widget::on_btnOff_clicked()
     ui->btnStarRec->setEnabled(false);
     ui->btnStopRec->setEnabled(false);
     ui->btnScreenshots->setEnabled(false);
+     ui->LEDSlider->setEnabled(false);
 }
 
 void Widget::on_btnScreenshots_clicked()
@@ -465,6 +475,10 @@ void Widget::buttonClick()
         ui->stackedWidget->setCurrentIndex(0);
         getAttend();
         getAssistant();
+        ui->comAssistant->setEditText("");
+        ui->comAttend->setEditText("");
+        ui->comAssistant_2->setEditText("");
+        ui->comAttend_2->setEditText("");
     } else if (name == "数据查询") {
         ui->stackedWidget->setCurrentIndex(1);
     } else if (name == "系统设置") {
@@ -541,23 +555,43 @@ void Widget::on_btnData_clicked()
 
 void Widget::on_btnSelectVideo_clicked()
 {
+    int total = 0;
+    int totalPage = 0;
+    dbPage->nowPage = 1;
     videoOrImg = 1;
-    if(ui->selectChart->text()!=""){  //搜病历号
-        dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
-    }
-    if(ui->selectSerial->text()!=""){ //流水号
-        dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
-    }
-    if(ui->selectBunk->text()!=""){  //床位号
-        dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
-    }
-    if(ui->selectName->text()!=""){ //姓名
-        dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
-    }
-    if(ui->selectRemark->text()!=""){
-        dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
-    }
 
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
+    }
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
+    }
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
+    }
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
+    }
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()==""){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
+    }
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg);
+    }
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!=""){  //病历号
+
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg);
+    }
+    if(total%20>0){
+        totalPage = total/20+1;
+    }else{
+        totalPage = total/20;
+    }
+    dbPage->totalPage = totalPage;
+    QString str = QString("共%1页").arg(QString::number(totalPage));
+    ui->labTotalPage->setText(str);
+     str = QString("共%1条").arg(QString::number(total));
+    ui->labTotal->setText(str);
     ui->tableView->setColumnWidth(0,100);
     ui->tableView->setColumnWidth(1,100);
     ui->tableView->setColumnWidth(2,50);
@@ -571,6 +605,13 @@ void Widget::on_btnSelectVideo_clicked()
     ui->tableView->setColumnWidth(10,150);
     ui->tableView->setColumnWidth(11,150);
     ui->tableView->setColumnWidth(12,150);
+    ui->btnNext->setEnabled(true);
+    ui->btnPrevious->setEnabled(true);
+    ui->btnFirst->setEnabled(true);
+    ui->btnLast->setEnabled(true);
+    ui->labNowPage->setVisible(true);
+    ui->labTotal->setVisible(true);
+    ui->labTotalPage->setVisible(true);
 }
 
 void Widget::on_choiceImagePath_clicked()
@@ -777,4 +818,153 @@ void Widget::on_btnAdd_clicked()
     ui->edtName->setText("");
     ui->edtAge->setValue(1);
     ui->textEdit->setText("");
+}
+
+void Widget::on_btnNext_clicked()
+{
+    int total;
+    dbPage->nowPage +=1;
+    QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
+    ui->labNowPage->setText(str);
+    if(dbPage->nowPage > 1 ){
+        ui->btnPrevious->setEnabled(true);
+    }
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()==""){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg,dbPage->nowPage);
+    }
+    if(dbPage->nowPage == dbPage->totalPage){
+        ui->btnNext->setEnabled(false);
+    }
+}
+
+void Widget::on_btnPrevious_clicked()
+{
+    int total;
+    dbPage->nowPage -=1;
+    QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
+    ui->labNowPage->setText(str);
+
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()==""){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg,dbPage->nowPage);
+    }
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!=""){  //病历号
+
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg,dbPage->nowPage);
+    }
+
+    if(dbPage->nowPage == 1 ){
+        ui->btnPrevious->setEnabled(false);
+        ui->btnNext->setEnabled(true);
+    }
+}
+
+void Widget::on_btnFirst_clicked()
+{
+    int total;
+    dbPage->nowPage = 1;
+    QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
+    ui->labNowPage->setText(str);
+
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
+    }
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
+    }
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
+    }
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
+    }
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="",dbPage->nowPage){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
+    }
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg);
+    }
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg);
+    }
+
+    if(dbPage->totalPage ==1 ){
+        ui->btnPrevious->setEnabled(false);
+        ui->btnNext->setEnabled(false);
+    }else{
+        ui->btnPrevious->setEnabled(false);
+        ui->btnNext->setEnabled(true);
+    }
+}
+
+void Widget::on_btnLast_clicked()
+{
+    int total;
+    dbPage->nowPage = dbPage->totalPage;
+    QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
+    ui->labNowPage->setText(str);
+
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
+    }
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
+    }
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
+    }
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
+    }
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="",dbPage->nowPage){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
+    }
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg);
+    }
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg);
+    }
+    if(dbPage->totalPage ==1 ){
+        ui->btnPrevious->setEnabled(false);
+        ui->btnNext->setEnabled(false);
+    }else{
+        ui->btnPrevious->setEnabled(true);
+        ui->btnNext->setEnabled(false);
+    }
 }
