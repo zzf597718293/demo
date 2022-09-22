@@ -11,9 +11,13 @@ Widget::Widget(QWidget *parent)
     //statusBar->setStyleSheet("QStatusBar::item{border:0px}");
     labelSerial = new QLabel(this);
     labelSerial->setText("手柄序列号：");
+
     labelUsedtime = new QLabel(this);
     statusBar->addWidget(labelSerial);
     statusBar->addWidget(labelUsedtime);
+    statusBar->setStyleSheet("background:#57AAF7");
+    labelSerial->setStyleSheet("color:#ffffff");
+    labelUsedtime->setStyleSheet("color:#ffffff");
     init();
 }
 
@@ -80,15 +84,16 @@ void Widget::init()
 {
     setWindowFlags(Qt::FramelessWindowHint); //设置无边框
     
-    QPixmap img = QPixmap(":/title.jpg");    //设置标题图片
+    QPixmap img = QPixmap(":/logo.png");    //设置标题图片
     QSize PixSize = ui->labelTitle->size();
     img.scaled(PixSize,Qt::KeepAspectRatioByExpanding);
     ui->labelTitle->setScaledContents(true);
     ui->labelTitle->setPixmap(img);
-
     timerPort = new QTimer(this);
     realTime = new QTimer(this);
-
+    timerDetect = new QTimer(this);
+    timerSysTime = new QTimer(this);
+    connect(timerSysTime,SIGNAL(timeout()),this,SLOT(on_btnReadSerial_clicked()));
     connect(realTime,SIGNAL(timeout()),this,SLOT(showTime()));
     realTime->start(1);
     mainThread = new QThread(this);          //视频录制线程
@@ -96,7 +101,7 @@ void Widget::init()
     myThread->moveToThread(mainThread);
 
     childPortThread = new QThread(this);     //串口线程
-    port1 = new Port();
+    port1 = new Port(this);
     port1->moveToThread(childPortThread);
     childPortThread->start();
 
@@ -111,11 +116,29 @@ void Widget::init()
     ui->slider_Contrast->setValue(dbPage->contrast);
     ui->slider_Chroma->setValue(dbPage->chroma);
     ui->slider_Saturation->setValue(dbPage->saturation);
+    ui->sp_Bright->setValue(dbPage->bright);
+    ui->spContrast->setValue(dbPage->contrast);
+    ui->sp_Chroma->setValue(dbPage->chroma);
+    ui->sp_Saturation->setValue(dbPage->saturation);
+    ui->cbIfFrame->setChecked(dbPage->ifFrame);
+    ui->CbWhite_Balance->setChecked(dbPage->whitebalance);
     ui->LEDSlider->setEnabled(false);
-    ui->label->setStyleSheet("QLabel{background-color:rgb(22,39,53);}");
+    videoplay = new VideoPlay;
+    if (dbPage->ifFrame == true){
+        //videoplay->ui->labelVideo->setFrameStyle(QFrame::Box);
+        //videoplay->ui->label->setFrameStyle(QFrame::Box);
+        ui->label->setFrameStyle(QFrame::Box);
+    }else {
+        //videoplay->ui->labelVideo->setFrameStyle(QFrame::NoFrame);
+        //videoplay->ui->label->setFrameStyle(QFrame::NoFrame);
+        ui->label->setFrameStyle(QFrame::NoFrame);
+    }
+
+    //ui->label->setStyleSheet("QLabel{background-color:rgb(22,39,53);}");
     QSize icoSize(32, 32);
     int icoWidth = 85;
-
+    ui->btnImgMag->setEnabled(false);
+    ui->btnImgRed->setEnabled(false);
     ui->edtChart->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{25}")));
     ui->edtSerial->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{25}")));
     ui->edtBunk->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{25}")));
@@ -125,6 +148,7 @@ void Widget::init()
     ui->selectBunk->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{25}")));
     ui->selectAgeMin->setValidator(new QRegExpValidator(QRegExp("[0-9]+$")));
     ui->selectAgeMax->setValidator(new QRegExpValidator(QRegExp("[0-9]+$")));
+    ui->labCamera->setText("摄像头未开启");
     ui->cbGender->addItem("男");
     ui->cbGender->addItem("女");
     ui->cbGender_2->addItem("男");
@@ -142,6 +166,7 @@ void Widget::init()
     btn->setMinimumWidth(icoWidth);
     btn->setCheckable(true);
     connect(timer,SIGNAL(timeout()),this,SLOT(videoOpen()));
+    connect(timerDetect,SIGNAL(timeout()),this,SLOT(autoDetect()));
     connect(btn, SIGNAL(clicked()), this, SLOT(buttonClick()));
     }
     ui->btnMain->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -150,6 +175,7 @@ void Widget::init()
     ui->btnData->setIcon(QIcon(":/main_data.png"));
     ui->btnConfig->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     ui->btnConfig->setIcon(QIcon(":/main_config.png"));
+    ui->labCamImg->setStyleSheet("background-image: url(:/cameraOff.png)");
     ui->edtSerial->setText(autoSerial());
 
     ui->btnNext->setEnabled(false);
@@ -159,8 +185,23 @@ void Widget::init()
     ui->labNowPage->setVisible(false);
     ui->labTotal->setVisible(false);
     ui->labTotalPage->setVisible(false);
+
+
     connect(ui->tableView,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(showVideoReplay(QModelIndex)));
     loadStyle();           //设置全局样式
+    if(!port1->openCom("COM5"))   //打开串口
+    {
+        QMessageBox warnBox(QMessageBox::Warning,"警告","串口打开失败",QMessageBox::Yes);
+        warnBox.exec();
+    }else{
+            portOpen = "COM5";
+            timerDetect->start(50);
+//            QMessageBox warnBox(QMessageBox::Information,"提示","串口打开成功",QMessageBox::Yes);
+//            warnBox.exec();
+            readTime();
+            timerSysTime->start(50);
+    }
+
 }
 
 void Widget::loadStyle()
@@ -226,7 +267,8 @@ void Widget::readSerial()
     QString data = "4E 3A 3F 0D";
     QByteArray byteData = QByteArray::fromHex(data.toLatin1());
     port1->m_serialPort->write(byteData);
-
+    port1->m_serialPort->waitForBytesWritten(30);
+    timerSysTime->stop();
 }
 
 void Widget::readTime()
@@ -234,10 +276,24 @@ void Widget::readTime()
     QString data = "54 3A 3F 0D";
     QByteArray byteData = QByteArray::fromHex(data.toLatin1());
     port1->m_serialPort->write(byteData);
-
+    port1->m_serialPort->waitForBytesWritten(30);
 }
 
-QString Widget::autoSerial()
+void Widget::autoDetect() //自动检测
+{
+    QStringList serialportinfo;
+    foreach(QSerialPortInfo info,QSerialPortInfo::availablePorts())
+        {
+            serialportinfo<<info.portName();
+        }
+    int index = serialportinfo.indexOf(portOpen);
+    if(index == -1 ){
+        QMessageBox warnBox(QMessageBox::Information,"提示","串口被拔出，请检查并重新打开串口",QMessageBox::Yes);
+        warnBox.exec();
+    }
+}
+
+QString Widget::autoSerial() //自动生成流水号
 {
     QDateTime time = QDateTime::currentDateTime();
     QString str = time.toString("yyyyMMdd%");
@@ -291,6 +347,7 @@ void Widget::handleToCamera(QString recData)
                 QMessageBox warnBox(QMessageBox::Warning,"警告","该设备已使用过，上次使用时间："+dateTime.toString("yyyy-MM-dd hh:mm")+"",QMessageBox::Yes);
                 warnBox.exec();
             }
+
         }
     }
 }
@@ -302,27 +359,43 @@ void Widget::videoOpen()
    cv::Mat frame2;
    cv::Mat frame3;
    cv::Mat frame4;
+   cv::Mat frame5;
    //cv::cvtColor(frame,frame1,CV_BGR2RGB);   //不处理的话颜色会偏蓝
-
-   if(ui->CbWhiteBalance->isChecked()){
-       frame1 = img.ImageWhitebalance(frame);
-   }else{
-       frame1 =frame;
+   if (imgSize == 1){
+       cv::resize(frame,frame,cv::Size(440,450));
+   }else if(imgSize == 2){
+       cv::resize(frame,frame,cv::Size(480,500));
+   }else if(imgSize == 3){
+       cv::resize(frame,frame,cv::Size(520,540));
+   }else if(imgSize == 4){
+       cv::resize(frame,frame,cv::Size(560,575));
+   }else if(imgSize == 5){
+       cv::resize(frame,frame,cv::Size(600,600));
    }
 
-   frame2 = img.ImageBright(frame1,beta/10,alpha*10); //调整亮度和对比度函数
-   frame3 = img.ImageSaturation(frame2,saturation);    //调整饱和度函数
-   frame4 = img.ImageCV(frame3);
+   frame1 = img.ImageHue(frame,hue);
+   if(ui->cbWhiteBalance->isChecked()){
+       frame2 = img.ImageWhitebalance(frame1);
+   }else{
+       frame2 =frame1;
+   }
+
+   frame3 = img.ImageBright(frame2,beta/10,alpha); //调整亮度和对比度函数
+   frame4 = img.ImageSaturation(frame3,saturation);    //调整饱和度函数
+   frame5 = img.ImageCV(frame4);
    //frame3 = imgPro(frame);
    //cv::cvtColor(frame4,frame4,CV_BGR2RGB);
    //cv::imshow("video1", frame);
    //cv::namedWindow("video", cv::WINDOW_AUTOSIZE);
 
-   cv::cvtColor(frame4,frame4,cv::COLOR_BGR2RGB);
+   cv::cvtColor(frame5,frame5,cv::COLOR_BGR2RGB);
    //cv::imshow("video", frame4);
-   frame4.convertTo(frame4,CV_8UC3,255.0);
-   QImage dst =QImage(frame4.data,frame4.cols,frame4.rows,frame4.step,QImage::Format_RGB888); //将Mat转换成Image放到Label里显示
-   ui->label->setPixmap(QPixmap::fromImage(dst));
+   frame5.convertTo(frame5,CV_8UC3,255.0);
+   //cv::resize(frame5, frame5, cv::Size(frame5.cols*2, frame5.rows*2), cv::INTER_LINEAR);
+   QImage dst =QImage(frame5.data,frame5.cols,frame5.rows,frame5.step,QImage::Format_RGB888); //将Mat转换成Image放到Label里显示
+   QMatrix matrix;
+   matrix.rotate(revolve);
+   ui->label->setPixmap(QPixmap::fromImage(dst).transformed(matrix,Qt::SmoothTransformation));
 
    //cv::imshow("ww",frame3);
 
@@ -335,7 +408,7 @@ void Widget::showVideoReplay(const QModelIndex &index) //传入表格中，被�
     if(videoOrImg ==1){
         QString strName = record.value(9).toString(); //获取视频开始时间字段信息
         strName = strName.remove(4,1).remove(6,1).remove(8,1).remove(10,1).remove(12,1);
-        QString strPath = record.value(11).toString();
+        QString strPath = record.value(11).toString().append("/");
         videoplay = new VideoPlay;
         videoThread = new QThread(this);
         videoplay->imgPath = record.value(11).toString();
@@ -355,9 +428,11 @@ void Widget::showVideoReplay(const QModelIndex &index) //传入表格中，被�
 
 void Widget::on_btnOn_clicked()
 {
+    revolve = 0;
     vid.open(0);        //打开摄像头
     if(vid.isOpened())
     {
+    ui->labCamera->setText("摄像头已开启");
     timer->start(33);   //摄像头每秒30帧
 
     ui->btnOn->setEnabled(false);
@@ -368,6 +443,15 @@ void Widget::on_btnOn_clicked()
     ui->sliderContrast->setEnabled(true);
     ui->sliderSaturation->setEnabled(true);
     ui->LEDSlider->setEnabled(true);
+    ui->btnLeft->setEnabled(true);
+    ui->btnRight->setEnabled(true);
+    ui->spBright->setEnabled(true);
+    ui->spContrast->setEnabled(true);
+    ui->spSaturation->setEnabled(true);
+    ui->spChroma->setEnabled(true);
+    ui->cbWhiteBalance->setEnabled(true);
+    ui->btnImgMag->setEnabled(true);
+    ui->btnImgRed->setEnabled(true);
     //摄像头未开启时各项参数不可调整
 
     }
@@ -391,6 +475,7 @@ void Widget::on_LEDSlider_valueChanged(int value)
 
 void Widget::on_btnOff_clicked()
 {
+    ui->labCamera->setText("摄像头未开启");
     timer->stop(); //关闭串口释放资源
     vid.release();
     ui->btnOff->setEnabled(false);
@@ -398,14 +483,21 @@ void Widget::on_btnOff_clicked()
     ui->btnStarRec->setEnabled(false);
     ui->btnStopRec->setEnabled(false);
     ui->btnScreenshots->setEnabled(false);
-     ui->LEDSlider->setEnabled(false);
+    ui->LEDSlider->setEnabled(false);
+    ui->spBright->setEnabled(false);
+    ui->spContrast->setEnabled(false);
+    ui->spSaturation->setEnabled(false);
+    ui->spChroma->setEnabled(false);
+    ui->cbWhiteBalance->setEnabled(false);
+    ui->btnImgMag->setEnabled(false);
+    ui->btnImgRed->setEnabled(false);
 }
 
 void Widget::on_btnScreenshots_clicked()
 {
     QDateTime systime = QDateTime::currentDateTime(); //获得当前系统时间
     QString str = ui->edtImagePath->text();
-    QString systimeDate = QString(str).append(systime.toString("yyyyMMddhhmmss")).append(".png"); //拼接保存路径
+    QString systimeDate = QString(str).append("/").append(systime.toString("yyyyMMddhhmmss")).append(".png"); //拼接保存路径
     string path = systimeDate.toStdString();
     dbPage->imageName = systime.toString("yyyyMMddhhmmss");
     dbPage->imagePath = ui->edtImagePath->text();
@@ -413,30 +505,43 @@ void Widget::on_btnScreenshots_clicked()
     frame.convertTo(frame,CV_8UC3,255.0);
     cv::imwrite(path,frame); //保存图片
     dbPage->saveImage();
+    QMessageBox *box = new QMessageBox(QMessageBox::Information,tr("提示"),tr("已截图"));
+    QTimer::singleShot(1500,box,SLOT(accept()));
+    box->exec();
 }
 
 void Widget::on_btnStarRec_clicked()
 {
+    ui->labCamera->setText("正在录制");
+    videoIsStart = false;
     mainThread->start();
     myThread->openCamera();
     QDateTime systime = QDateTime::currentDateTime(); //获得当前系统时间
     QString str = ui->edtVideoPath->text();
-    QString systimeDate = QString(str).append(systime.toString("yyyyMMddhhmmss")).append(".mp4"); //拼接保存路径
+    QString systimeDate = QString(str).append("/").append(systime.toString("yyyyMMddhhmmss")).append(".mp4"); //拼接保存路径
     //string path = systimeDate.toStdString();
     dbPage->videoName = systime.toString("yyyyMMddhhmmss");
     dbPage->videoPath = ui->edtImagePath->text();
     ui->btnStarRec->setEnabled(false);
     ui->btnStopRec->setEnabled(true);
+    ui->btnOff->setEnabled(false);
     dbPage->startTime = QString(systime.toString("yyyy-MM-dd-hh:mm:ss"));
+    ui->labCamImg->setStyleSheet("background-image: url(:/camreaOn.png)");
+    QMessageBox *box = new QMessageBox(QMessageBox::Information,tr("提示"),tr("开始录制"));
+    QTimer::singleShot(1500,box,SLOT(accept()));
+    box->exec();
     dbPage->saveVideoStart();
+
     myThread->ThreadStart(systimeDate);
-    videoIsStart = false;
+
 }
 
 void Widget::on_btnStopRec_clicked()
 {
     ui->btnStarRec->setEnabled(true);
     ui->btnStopRec->setEnabled(false);
+    ui->btnOff->setEnabled(true);
+    ui->labCamera->setText("摄像头已开启");
     QDateTime systime = QDateTime::currentDateTime(); //获得当前系统时间
     dbPage->endTime = QString(systime.toString("yyyy-MM-dd-hh:mm:ss"));
     dbPage->saveVideoEnd();
@@ -444,23 +549,36 @@ void Widget::on_btnStopRec_clicked()
     mainThread->quit();
     mainThread->wait();
     videoIsStart = true;
+    cv::destroyAllWindows();
+    QMessageBox *box = new QMessageBox(QMessageBox::Information,tr("提示"),tr("结束录制"));
+    ui->labCamImg->setStyleSheet("background-image: url(:/cameraOff.png)");
+    QTimer::singleShot(1500,box,SLOT(accept()));
+    box->exec();
 }
 
 void Widget::on_sliderBright_valueChanged(int value)
 {
     beta = float(value);
+    ui->spBright->setValue(value);
 }
 
 void Widget::on_sliderContrast_valueChanged(int value)
 {
     alpha = float(value);
+    ui->spContrast->setValue(value);
 }
 
 void Widget::on_sliderSaturation_valueChanged(int value)
 {
     saturation = value;
+    ui->spSaturation->setValue(value);
 }
 
+void Widget::on_sliderChroma_valueChanged(int value)
+{
+    hue = value;
+    ui->spChroma->setValue(value);
+}
 void Widget::buttonClick()
 {
     QAbstractButton *b = (QAbstractButton *)sender();
@@ -591,6 +709,14 @@ void Widget::on_btnSelectVideo_clicked()
     QString str = QString("共%1页").arg(QString::number(totalPage));
     ui->labTotalPage->setText(str);
      str = QString("共%1条").arg(QString::number(total));
+    if(totalPage==1)
+    {
+        ui->btnNext->setEnabled(false);
+        ui->btnPrevious->setEnabled(false);
+    }else{
+        ui->btnNext->setEnabled(true);
+
+    }
     ui->labTotal->setText(str);
     ui->tableView->setColumnWidth(0,100);
     ui->tableView->setColumnWidth(1,100);
@@ -605,8 +731,7 @@ void Widget::on_btnSelectVideo_clicked()
     ui->tableView->setColumnWidth(10,150);
     ui->tableView->setColumnWidth(11,150);
     ui->tableView->setColumnWidth(12,150);
-    ui->btnNext->setEnabled(true);
-    ui->btnPrevious->setEnabled(true);
+
     ui->btnFirst->setEnabled(true);
     ui->btnLast->setEnabled(true);
     ui->labNowPage->setVisible(true);
@@ -632,7 +757,7 @@ void Widget::on_choiceVideoPath_clicked()
 
 void Widget::on_btnSystemSave_clicked()
 {
-    dbPage->saveSystem(ui->edtImagePath->text(),ui->edtVideoPath->text(),ui->slider_Bright->value(),ui->slider_Contrast->value(),ui->slider_Chroma->value(),ui->slider_Saturation->value());
+    dbPage->saveSystem(ui->edtImagePath->text(),ui->edtVideoPath->text(),ui->slider_Bright->value(),ui->slider_Contrast->value(),ui->slider_Chroma->value(),ui->slider_Saturation->value(),ui->CbWhite_Balance->isChecked(),ui->cbIfFrame->isChecked());
     dbPage->showSystem();
     ui->edtImagePath->setText(dbPage->imagePath);
     ui->edtVideoPath->setText(dbPage->videoPath);
@@ -640,6 +765,7 @@ void Widget::on_btnSystemSave_clicked()
     ui->slider_Contrast->setValue(dbPage->contrast);
     ui->slider_Chroma->setValue(dbPage->chroma);
     ui->slider_Saturation->setValue(dbPage->saturation);
+    ui->CbWhite_Balance->setChecked(dbPage->whitebalance);
 }
 
 void Widget::on_btnAttend_clicked()
@@ -665,9 +791,11 @@ void Widget::on_btnMenu_Max_clicked()
 
     if (max) {
         this->setGeometry(location);
+        ui->btnMenu_Max->setStyleSheet("border-image: url(:/Maximize.png)");
     } else {
         location = this->geometry();
         this->setGeometry(this->getScreenRect(true));
+        ui->btnMenu_Max->setStyleSheet("border-image: url(:/Middlemize.png)");
     }
     max = !max;
 }
@@ -696,7 +824,8 @@ void Widget::on_btnOpenPort_clicked()
         QMessageBox warnBox(QMessageBox::Warning,"警告","串口打开失败",QMessageBox::Yes);
         warnBox.exec();
     }else{
-
+            portOpen = ui->comPort->currentText();
+            timerDetect->start(50);
             QMessageBox warnBox(QMessageBox::Information,"提示","串口打开成功",QMessageBox::Yes);
             warnBox.exec();
             readTime();
@@ -801,7 +930,7 @@ void Widget::on_btnSelectImg_clicked()
 
 
 
-void Widget::on_btnClear_clicked()
+void Widget::on_btnClean_clicked()
 {
     ui->edtChart->setText("");
     ui->edtBunk->setText("");
@@ -832,7 +961,7 @@ void Widget::on_btnNext_clicked()
     if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
         total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
         total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg,dbPage->nowPage);
     }
     if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
@@ -847,7 +976,7 @@ void Widget::on_btnNext_clicked()
     if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
         total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!=""){  //病历号
 
         total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg,dbPage->nowPage);
     }
@@ -866,7 +995,7 @@ void Widget::on_btnPrevious_clicked()
     if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
         total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
         total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg,dbPage->nowPage);
     }
     if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
@@ -899,25 +1028,25 @@ void Widget::on_btnFirst_clicked()
     QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
     ui->labNowPage->setText(str);
 
-    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //病历号
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
         total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
     }
-    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //流水号
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
         total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
     }
-    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //床位号
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
         total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
     }
-    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //姓名
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //姓名
         total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
     }
-    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="",dbPage->nowPage){
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()==""){
         total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
     }
-    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
         total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg);
     }
-    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!=""){  //病历号
 
         total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg);
     }
@@ -938,27 +1067,27 @@ void Widget::on_btnLast_clicked()
     QString str = QString("第%1页").arg(QString::number(dbPage->nowPage));
     ui->labNowPage->setText(str);
 
-    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //病历号
-        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg);
+    if(ui->selectChart->text()!="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //病历号
+        total = dbPage->selectVideo(ui->selectChart->text(),"Chart",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectSerial->text()!="" && ui->selectChart->text()!="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //流水号
-        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg);
+    if(ui->selectSerial->text()!="" && ui->selectChart->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //流水号
+        total = dbPage->selectVideo(ui->selectSerial->text(),"Serial",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){  //床位号
-        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg);
+    if(ui->selectBunk->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){  //床位号
+        total = dbPage->selectVideo(ui->selectBunk->text(),"Bunk",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){ //姓名
-        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg);
+    if(ui->selectName->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){ //姓名
+        total = dbPage->selectVideo(ui->selectName->text(),"Name",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="",dbPage->nowPage){
-        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg);
+    if(ui->selectRemark->text()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()==""){
+        total = dbPage->selectVideo(ui->selectRemark->text(),"Remark",videoOrImg,dbPage->nowPage);
     }
-    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()=="",dbPage->nowPage){
-        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg);
+    if(ui->comAttend_2->currentText()!="" && ui->comAssistant_2->currentText()!="" && ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()=="" && ui->selectAgeMin->text()=="" && ui->selectAgeMax->text()=="" && ui->selectRemark->text()==""){
+        total = dbPage->selectVideo(ui->comAttend_2->currentText(),ui->comAssistant_2->currentText(),"doctor",videoOrImg,dbPage->nowPage);
     }
-    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!="",dbPage->nowPage){  //病历号
+    if(ui->selectChart->text()=="" && ui->selectSerial->text()=="" && ui->selectBunk->text()=="" && ui->selectName->text()!="" && ui->selectAgeMin->text()!="" && ui->selectAgeMax->text()!=""){  //病历号
 
-        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg);
+        total = dbPage->selectVideo(ui->selectName->text(),ui->selectAgeMin->text().toInt(),ui->selectAgeMax->text().toInt(),"patien",videoOrImg,dbPage->nowPage);
     }
     if(dbPage->totalPage ==1 ){
         ui->btnPrevious->setEnabled(false);
@@ -967,4 +1096,257 @@ void Widget::on_btnLast_clicked()
         ui->btnPrevious->setEnabled(true);
         ui->btnNext->setEnabled(false);
     }
+}
+
+void Widget::on_btnLeft_clicked()
+{
+    revolve-=90;
+    if(revolve==-360){
+        revolve = 0;
+    }
+    switch (revolve) {
+    case 90:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRight);
+        break;
+    case 180:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDown);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+     case 270:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeft);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+    case -90:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeft);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+    case -180:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDown);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+     case -270:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRight);
+        break;
+    case 0:
+       ui->labUp->setPixmap(imgUp);
+       ui->labDown->setPixmap(imgDownGery);
+       ui->labLeft->setPixmap(imgLeftGery);
+       ui->labRight->setPixmap(imgRightGery);
+       break;
+   }
+}
+
+void Widget::on_btnRight_clicked()
+{
+    revolve+=90;
+    if(revolve==360){
+        revolve = 0;
+    }
+    switch (revolve) {
+    case 90:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRight);
+        break;
+    case 180:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDown);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+     case 270:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeft);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+    case -90:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeft);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+    case -180:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDown);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRightGery);
+        break;
+     case -270:
+        ui->labUp->setPixmap(imgUpGery);
+        ui->labDown->setPixmap(imgDownGery);
+        ui->labLeft->setPixmap(imgLeftGery);
+        ui->labRight->setPixmap(imgRight);
+        break;
+    case 0:
+       ui->labUp->setPixmap(imgUp);
+       ui->labDown->setPixmap(imgDownGery);
+       ui->labLeft->setPixmap(imgLeftGery);
+       ui->labRight->setPixmap(imgRightGery);
+       break;
+   }
+}
+
+
+
+void Widget::on_spBright_valueChanged(int arg1)
+{
+    ui->sliderBright->setValue(arg1);
+}
+
+void Widget::on_spContrast_valueChanged(int arg1)
+{
+    ui->sliderContrast->setValue(arg1);
+}
+
+void Widget::on_spSaturation_valueChanged(int arg1)
+{
+    ui->sliderSaturation->setValue(arg1);
+}
+
+void Widget::on_spChroma_valueChanged(int arg1)
+{
+    ui->sliderChroma->setValue(arg1);
+}
+
+
+void Widget::on_slider_Bright_valueChanged(int value)
+{
+    ui->sp_Bright->setValue(value);
+}
+
+void Widget::on_slider_Contrast_valueChanged(int value)
+{
+    ui->sp_Contrast->setValue(value);
+}
+
+void Widget::on_slider_Saturation_valueChanged(int value)
+{
+    ui->sp_Saturation->setValue(value);
+}
+
+void Widget::on_slider_Chroma_valueChanged(int value)
+{
+    ui->sp_Chroma->setValue(value);
+}
+
+void Widget::on_sp_Bright_valueChanged(int arg1)
+{
+    ui->slider_Bright->setValue(arg1);
+}
+
+void Widget::on_sp_Contrast_valueChanged(int arg1)
+{
+    ui->slider_Contrast->setValue(arg1);
+}
+
+void Widget::on_sp_Saturation_valueChanged(int arg1)
+{
+    ui->slider_Saturation->setValue(arg1);
+}
+
+void Widget::on_sp_Chroma_valueChanged(int arg1)
+{
+    ui->sliderChroma->setValue(arg1);
+}
+
+void Widget::on_cbIfFrame_stateChanged(int arg1)
+{
+    if(arg1 == Qt::Checked){
+        ui->label->setFrameStyle(QFrame::Box);
+    }else{
+        ui->label->setFrameStyle(QFrame::NoFrame);
+    }
+}
+
+void Widget::on_btnImgMag_clicked()
+{
+    if(imgSize>5){
+        ui->btnImgMag->setEnabled(false);
+        return;
+    }else{
+        ui->btnImgRed->setEnabled(true);
+    }
+    imgSize = imgSize+1;
+    switch(imgSize){
+        case 1:
+            ui->label->setMinimumSize(440,450);
+            ui->label->setMaximumSize(440,450);
+            break;
+        case 2:
+            ui->label->setMinimumSize(480,500);
+            ui->label->setMaximumSize(480,500);
+            break;
+        case 3:
+            ui->label->setMinimumSize(520,540);
+            ui->label->setMaximumSize(520,540);
+            break;
+        case 4:
+            ui->label->setMinimumSize(560,575);
+            ui->label->setMaximumSize(560,575);
+            break;
+        case 5:
+            ui->label->setMinimumSize(600,600);
+            ui->label->setMaximumSize(600,600);
+            ui->btnImgMag->setEnabled(false);
+            break;
+    }
+
+
+
+}
+
+void Widget::on_btnImgRed_clicked()
+{
+    imgSize = imgSize-1;
+    if(imgSize<0){
+        ui->btnImgRed->setEnabled(false);
+        return;
+    }else{
+        ui->btnImgMag->setEnabled(true);
+    }
+
+    switch(imgSize){
+        case 0:
+            ui->label->setMinimumSize(400,400);
+            ui->label->setMaximumSize(400,400);
+            ui->btnImgRed->setEnabled(false);
+            break;
+        case 1:
+            ui->label->setMinimumSize(440,450);
+            ui->label->setMaximumSize(440,450);
+            break;
+        case 2:
+            ui->label->setMinimumSize(480,500);
+            ui->label->setMaximumSize(480,500);
+            break;
+        case 3:
+            ui->label->setMinimumSize(520,540);
+            ui->label->setMaximumSize(520,540);
+            break;
+        case 4:
+            ui->label->setMinimumSize(560,575);
+            ui->label->setMaximumSize(560,575);
+            break;
+        case 5:
+            ui->label->setMinimumSize(600,600);
+            ui->label->setMaximumSize(600,600);
+            break;
+    }
+
 }

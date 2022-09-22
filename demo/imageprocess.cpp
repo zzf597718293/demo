@@ -36,9 +36,24 @@ cv::Mat ImageProcess::ImageBright(cv::Mat frame,float alpha,float beta)
     return temp;
 }
 
-cv::Mat ImageProcess::ImageHue(cv::Mat &frame)
+cv::Mat ImageProcess::ImageHue(cv::Mat frame,int hue)
 {
+    cv::Mat imgHSV;
+    imgHSV = cv::Mat::zeros(frame.size(),frame.type());
+    cv::cvtColor(frame,imgHSV,cv::COLOR_RGB2HSV);
+    for(int i =0; i < imgHSV.rows; i++)
+    {
+        for (int j = 0; j < imgHSV.cols; j++) {
+            int h = imgHSV.at<cv::Vec3b>(i, j)[0];
 
+            imgHSV.at<cv::Vec3b>(i, j)[0] = h/hue;
+
+        }
+    }
+
+   cv::cvtColor(imgHSV,imgHSV,cv::COLOR_HSV2RGB);
+
+   return imgHSV;
 }
 
 cv::Mat ImageProcess::ImageContrast(cv::Mat &frame)

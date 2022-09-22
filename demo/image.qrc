@@ -15,5 +15,27 @@
         <file>Minimize.png</file>
         <file>Shutdown-1.png</file>
         <file>icon.rc</file>
+        <file>giphy.gif</file>
+        <file>close.png</file>
+        <file>add_bottom.png</file>
+        <file>add_left.png</file>
+        <file>add_right.png</file>
+        <file>add_top.png</file>
+        <file>comboxDown.png</file>
+        <file>spinBoxDown.png</file>
+        <file>spinBoxUp.png</file>
+        <file>cameraOff.png</file>
+        <file>camreaOn.png</file>
+        <file>down.png</file>
+        <file>downGery.png</file>
+        <file>left.png</file>
+        <file>leftGery.png</file>
+        <file>right.png</file>
+        <file>rightGery.png</file>
+        <file>up.png</file>
+        <file>upGery.png</file>
+        <file>Middlemize.png</file>
+        <file>logo.png</file>
+        <file>logo.gif</file>
     </qresource>
 </RCC>

@@ -18,7 +18,7 @@ public:
     ~DbPage();
 
     void saveData();
-    void saveSystem(QString,QString,int,int,int,int);
+    void saveSystem(QString,QString,int,int,int,int,bool,bool);
     void saveImage();
     void saveVideoStart();
     void saveVideoEnd();
@@ -41,10 +41,12 @@ public:
     QSqlQueryModel *qmodel;
     QString imageName;
     QString imagePath;      //图片路径
-    int bright;
+    int bright = 1;
     int contrast;
     int chroma;
     int saturation;
+    bool whitebalance;
+    bool ifFrame;
     QString videoName;
     QString videoPath;      //视频路径
     QString startTime;

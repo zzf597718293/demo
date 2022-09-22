@@ -30,11 +30,12 @@ class VideoPlay : public QWidget
 public:
     explicit VideoPlay(QWidget *parent = nullptr);
     ~VideoPlay();
+    Ui::VideoPlay *ui;
     void getVideoName(QString,QString);
     void getPatienInfo(QString,QString,QString,QString,QString,int,QString,QString,QString);
     QString imgPath;
 private:
-    Ui::VideoPlay *ui;
+
     DbPage *dbPage;
     QTimer *timer;
     cv::Mat frame;
@@ -47,6 +48,7 @@ private:
     QVideoWidget *mywidget;
     QString chartnum;
     QList<QString> imageList;
+    int revolve = 0;
 private slots:
     void initList();
     void showImage(QListWidgetItem*);
@@ -69,6 +71,10 @@ private slots:
     void on_btnDeleteList_clicked();
 
     void on_btnSaveAs_clicked();
+
+    void on_btnLeft_clicked();
+
+    void on_btnRight_clicked();
 
 signals:
     sendFrames(int);

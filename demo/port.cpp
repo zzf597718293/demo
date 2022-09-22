@@ -7,6 +7,7 @@ Port::Port(QObject *parent) : QObject(parent)
 }
 Port::~Port()
 {
+    m_serialPort->close();
     delete m_serialPort;
 }
 bool Port::openCom(QString com)
@@ -138,7 +139,15 @@ char Port::hexStrToChar(char data)
 
 void Port::receiveData()
 {
+    //m_serialPort->waitForReadyRead(30);
     QByteArray byte_data = m_serialPort->readAll();
-    QString string_data = byte_data.toHex().toUpper();
+    if(byte_data.size()==4){
+        buffer = byte_data;
+        m_serialPort->waitForReadyRead(30);
+    }
+    buffer = buffer.append(byte_data);
+    QString string_data = buffer.toHex().toUpper();
+    buffer.clear();
     emit sendData(string_data);
+
 }

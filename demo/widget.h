@@ -2,6 +2,7 @@
 #define WIDGET_H
 #include"port.h"
 #include"videoplay.h"
+#include"ui_videoplay.h"
 #include"screenshot.h"
 #include"Dbpage.h"
 #include"videothread.h"
@@ -53,9 +54,11 @@ private:
     QLabel *labelSerial;
     QLabel *labelUsedtime;
     int bright = 0;
-    float alpha;
-    float beta =1;
-    int saturation;
+    float alpha = 0;
+    int hue = 1;
+    float beta = 1;
+    int saturation = 0;
+    int imgSize = 0;
     cv::VideoCapture vid;
     cv::Mat frame;
     cv::Mat frame1;
@@ -63,7 +66,10 @@ private:
     QTimer *timer;
     QTimer *timerPort;
     QTimer *realTime;
+    QTimer *timerDetect;
+    QTimer *timerSysTime;
     Port *port1;
+    QString portOpen = "";
     VideoPlay *videoplay;
     Screenshot *screenshot;
     VideoThread *myThread;
@@ -78,18 +84,36 @@ private:
     QPoint mouseStartPoint;
     QPoint windowTopLeftPoint;
     int videoOrImg;  //1:v 0:i
+    int revolve = 0;
+    QPixmap imgUpGery =QPixmap(":/upGery.png");
+    QPixmap imgDownGery =QPixmap(":/downGery.png");
+    QPixmap imgLeftGery =QPixmap(":/leftGery.png");
+    QPixmap imgRightGery =QPixmap(":/rightGery.png");
+    QPixmap imgUp =QPixmap(":/up.png");
+    QPixmap imgDown =QPixmap(":/down.png");
+    QPixmap imgLeft =QPixmap(":/left.png");
+    QPixmap imgRight =QPixmap(":/right.png");
+    enum Direction
+    {
+        IMG_UP = 0,
+        IMG_DOWN = 1,
+        IMG_LEFT = 2,
+        IMG_RIGET = 3
+    };
+
     void init();
     void loadStyle();
     void getAttend();
     void getAssistant();
     void readSerial();
     void readTime();
+
     QString autoSerial(); //自动生成流水号
 public slots:
     void videoOpen();
     void showTime();
 private slots:
-
+    void autoDetect();
     void showVideoReplay(const QModelIndex &);
     void handleToCamera(QString);
     void on_btnOn_clicked();
@@ -104,6 +128,7 @@ private slots:
     void on_sliderBright_valueChanged(int value);
     void on_sliderContrast_valueChanged(int value);
     void on_sliderSaturation_valueChanged(int value);
+    void on_sliderChroma_valueChanged(int value);
     void buttonClick();
     void on_btnMenu_Close_clicked();
 
@@ -129,12 +154,31 @@ private slots:
     void on_selectAgeMax_textChanged(const QString &arg1);
     void on_btnSelectImg_clicked();
 
-    void on_btnClear_clicked();
+    void on_btnClean_clicked();
     void on_btnAdd_clicked();
     void on_btnNext_clicked();
     void on_btnPrevious_clicked();
     void on_btnFirst_clicked();
     void on_btnLast_clicked();
+    void on_btnLeft_clicked();
+    void on_btnRight_clicked();
+
+    void on_spBright_valueChanged(int arg1);
+    void on_spContrast_valueChanged(int arg1);
+    void on_spSaturation_valueChanged(int arg1);
+    void on_spChroma_valueChanged(int arg1);
+
+    void on_slider_Bright_valueChanged(int value);
+    void on_slider_Contrast_valueChanged(int value);
+    void on_slider_Saturation_valueChanged(int value);
+    void on_slider_Chroma_valueChanged(int value);
+    void on_sp_Bright_valueChanged(int arg1);
+    void on_sp_Contrast_valueChanged(int arg1);
+    void on_sp_Saturation_valueChanged(int arg1);
+    void on_sp_Chroma_valueChanged(int arg1);
+    void on_cbIfFrame_stateChanged(int arg1);
+    void on_btnImgMag_clicked();
+    void on_btnImgRed_clicked();
 };
 
 

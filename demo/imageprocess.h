@@ -14,7 +14,7 @@ public:
     ImageProcess();
     cv::Mat ImageBright(cv::Mat,float,float);      //亮度处理
     cv::Mat ImageContrast(cv::Mat&);    //对比度处理
-    cv::Mat ImageHue(cv::Mat&);         //色调处理
+    cv::Mat ImageHue(cv::Mat,int);         //色调处理
     cv::Mat ImageSaturation(cv::Mat,int);  //饱和度处理
     cv::Mat ImageCV(cv::Mat);
     cv::Mat ImageWhitebalance(cv::Mat);//白平衡处理

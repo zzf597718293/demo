@@ -6,11 +6,21 @@ VideoPlay::VideoPlay(QWidget *parent) :
     ui(new Ui::VideoPlay)
 {
     ui->setupUi(this);
+    dbPage = new DbPage(this);
+    dbPage->showSystem();
+    if(dbPage->ifFrame == true){
+        ui->label->setFrameStyle(QFrame::Box);
+        ui->labelVideo->setFrameStyle(QFrame::Box);
+    }else{
+        ui->label->setFrameStyle(QFrame::NoFrame);
+        ui->labelVideo->setFrameStyle(QFrame::NoFrame);
+    }
+
     setWindowTitle("视频回放");
     img = new ImageProcess;
     myplayer = new QMediaPlayer(this);
     mywidget = new QVideoWidget(ui->labelVideo);
-    mywidget->resize(ui->labelVideo->size());
+
     myplayer->setVideoOutput(mywidget);
     ui->videoSlider->setRange(0, 0);
     ui->cbGender->addItem("男");
@@ -34,22 +44,26 @@ VideoPlay::VideoPlay(QWidget *parent) :
         ui->comAssistant->addItem(*iter);
     }
 
-    dbPage = new DbPage(this);
+
+
     connect(myplayer, &QMediaPlayer::positionChanged, this, &VideoPlay::positionChanged);
     connect(myplayer, &QMediaPlayer::durationChanged, this, &VideoPlay::durationChanged);
     setAttribute(Qt::WA_DeleteOnClose);
     connect(this,SIGNAL(sendFrames(int)),ui->videoSlider,SLOT(setValue(int)));
     connect(ui->imageList,&QListWidget::itemClicked,this,&VideoPlay::showImage);
+    qDebug()<<222222222222222;
 }
 
 VideoPlay::~VideoPlay()
 {
     myplayer->stop();
+    delete img;
     delete mywidget;
     //video.release();
-    delete img;
-    delete ui;
 
+
+    delete ui;
+qDebug()<<11111111111111;
 }
 
 void VideoPlay::getVideoName(QString name, QString path)
@@ -87,7 +101,7 @@ void VideoPlay::initList()
     QList<QString>::iterator iter;
     for(iter = imageList.begin(); iter != imageList.end();++iter)
     {
-        QListWidgetItem *item = new QListWidgetItem;
+        QListWidgetItem *item = new QListWidgetItem();
         item->setText(*iter);
         item->setCheckState(Qt::Unchecked);
         ui->imageList->addItem(item);
@@ -96,10 +110,12 @@ void VideoPlay::initList()
 
 void VideoPlay::showImage(QListWidgetItem *item)
 {
-    QString path = QString(dbPage->getImagePath(item->text()))+(item->text())+(".png");
+    QMatrix matrix;
+    matrix.rotate(revolve);
+    QString path = QString(dbPage->getImagePath(item->text()))+"/"+(item->text())+(".png");
     QImage img;
     img.load(path);
-    ui->label->setPixmap(QPixmap::fromImage(img));
+    ui->label->setPixmap(QPixmap::fromImage(img).transformed(matrix,Qt::SmoothTransformation));
 }
 
 void VideoPlay::on_videoSlider_sliderMoved(int position)
@@ -109,6 +125,7 @@ void VideoPlay::on_videoSlider_sliderMoved(int position)
 
 void VideoPlay::on_btnVideoPalay_clicked()
 {
+    mywidget->resize(ui->labelVideo->size());
     if(isStop){
         ui->btnVideoPalay->setStyleSheet("QPushButton#btnVideoPalay{border-image:url(:/video_stop.png)}");
         isStop = false;
@@ -222,4 +239,14 @@ void VideoPlay::on_btnSaveAs_clicked()
         }
     }
 
+}
+
+void VideoPlay::on_btnLeft_clicked()
+{
+    revolve-=90;
+}
+
+void VideoPlay::on_btnRight_clicked()
+{
+    revolve+=90;
 }

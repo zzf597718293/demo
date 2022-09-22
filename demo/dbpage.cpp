@@ -110,7 +110,9 @@ database.setDatabaseName("MyDataBase.db");
                          bright INTEGER,\
                          contrast INTEGER,\
                          chroma INTEGER,\
-                         saturation INTEGER \
+                         saturation INTEGER, \
+                         whitebalance BOOLEAN, \
+                         ifframe BOOLEAN \
                          )");
     sqlQuery.prepare(createSql);
 
@@ -231,13 +233,13 @@ void DbPage::saveData()
 //    }
 }
 
-void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contrast,int chroma,int saturation)
+void DbPage::saveSystem(QString imagepath, QString videopath, int bright,int contrast, int chroma, int saturation, bool whiteBalance, bool ifFrame)
 {
 
     QSqlQuery sqlQuery;
     sqlQuery.exec("SELECT id FROM system WHERE id=1");
     if(!sqlQuery.next()){
-        sqlQuery.prepare("INSERT INTO system VALUES(:id,:imagepath,:videopath,:bright,:contrast,:chroma,:saturation)");
+        sqlQuery.prepare("INSERT INTO system VALUES(:id,:imagepath,:videopath,:bright,:contrast,:chroma,:saturation,:whitebalance,:ifframe)");
         sqlQuery.bindValue(":id",1);
         sqlQuery.bindValue(":imagepath",imagepath);
         sqlQuery.bindValue(":videopath",videopath);
@@ -245,6 +247,8 @@ void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contr
         sqlQuery.bindValue(":contrast",contrast);
         sqlQuery.bindValue(":chroma",chroma);
         sqlQuery.bindValue(":saturation",saturation);
+        sqlQuery.bindValue(":whitebalance",whiteBalance);
+        sqlQuery.bindValue(":ifframe",ifFrame);
         if(!sqlQuery.exec())
         {
             qDebug() <<  sqlQuery.lastError();
@@ -252,7 +256,7 @@ void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contr
     }
     else
     {
-        sqlQuery.prepare("UPDATE system SET id=:id,imagepath=:imagepath,videopath=:videopath,bright=:bright,contrast=:contrast,chroma=:chroma,saturation=:saturation");
+        sqlQuery.prepare("UPDATE system SET id=:id,imagepath=:imagepath,videopath=:videopath,bright=:bright,contrast=:contrast,chroma=:chroma,saturation=:saturation,whitebalance=:whitebalance,ifframe=:ifframe");
         sqlQuery.bindValue(":id",1);
         sqlQuery.bindValue(":imagepath",imagepath);
         sqlQuery.bindValue(":videopath",videopath);
@@ -260,6 +264,8 @@ void DbPage::saveSystem(QString imagepath,QString videopath,int bright,int contr
         sqlQuery.bindValue(":contrast",contrast);
         sqlQuery.bindValue(":chroma",chroma);
         sqlQuery.bindValue(":saturation",saturation);
+        sqlQuery.bindValue(":whitebalance",whiteBalance);
+        sqlQuery.bindValue(":ifframe",ifFrame);
             if(!sqlQuery.exec())
             {
                 qDebug() <<  sqlQuery.lastError();
@@ -329,6 +335,8 @@ void DbPage::showSystem()
     contrast = sqlQuery.value(4).toInt();
     chroma = sqlQuery.value(5).toInt();
     saturation = sqlQuery.value(6).toInt();
+    whitebalance = sqlQuery.value(7).toBool();
+    ifFrame = sqlQuery.value(8).toBool();
 }
 
 int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
@@ -352,14 +360,14 @@ int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN video AS v "
                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                        " WHERE p.chartnum = '"+str+"' LIMIT 0,20");
+                        " WHERE p.chartnum = '"+str+"' ORDER BY v.starttime DESC LIMIT 0,20");
        if(page > 0){
        QString sql = QString("SELECT * FROM patient AS p "
                              "INNER JOIN serial AS s "
                              "ON p.chartnum = s.chartnum "
                              "INNER JOIN video AS v "
                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                             " WHERE p.chartnum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+                             " WHERE p.chartnum = '"+str+"' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
        qmodel->setQuery(sql);
        }
     }
@@ -380,14 +388,14 @@ int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
                          "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                         " WHERE p.chartnum = '"+str+"' LIMIT 0,20");
+                         " WHERE s.serialnum = '"+str+"' ORDER BY v.starttime DESC LIMIT 0,20");
         if(page > 0){
         QString sql = QString("SELECT * FROM patient AS p "
                               "INNER JOIN serial AS s "
                               "ON p.chartnum = s.chartnum "
                               "INNER JOIN video AS v "
                               "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                              " WHERE p.chartnum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+                              " WHERE s.serialnum = '"+str+"' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
         qmodel->setQuery(sql);
         }
 
@@ -408,14 +416,14 @@ int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
                          "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                         " WHERE p.name LIKE '%"+str+"%' LIMIT 0,20");
+                         " WHERE p.name LIKE '%"+str+"%' ORDER BY v.starttime DESC LIMIT 0,20");
         if(page > 0){
         QString sql = QString("SELECT * FROM patient AS p "
                               "INNER JOIN serial AS s "
                               "ON p.chartnum = s.chartnum "
                               "INNER JOIN video AS v "
                               "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                              " WHERE p.name LIKE '%"+str+"%' LIMIT %1,20").arg((page-1)*20);
+                              " WHERE p.name LIKE '%"+str+"%' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
         qmodel->setQuery(sql);
         }
     }
@@ -435,14 +443,14 @@ int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
                          "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                         " WHERE s.bunknum = '"+str+"' LIMIT 0,20");
+                         " WHERE s.bunknum = '"+str+"' ORDER BY v.starttime DESC LIMIT 0,20");
         if(page > 0){
         QString sql = QString("SELECT * FROM patient AS p "
                               "INNER JOIN serial AS s "
                               "ON p.chartnum = s.chartnum "
                               "INNER JOIN video AS v "
                               "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                              " WHERE s.bunknum = '"+str+"' LIMIT %1,20").arg((page-1)*20);
+                              " WHERE s.bunknum = '"+str+"' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
         qmodel->setQuery(sql);
         }
     }
@@ -462,14 +470,14 @@ int DbPage::selectVideo(QString str,QString type,int videoOrImg,int page)
                          "ON p.chartnum = s.chartnum "
                          "INNER JOIN video AS v "
                          "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                         " WHERE s.remark LIKE '%"+str+"%' LIMIT 0,20");
+                         " WHERE s.remark LIKE '%"+str+"%' ORDER BY v.starttime DESC LIMIT 0,20");
         if(page > 0){
         QString sql = QString("SELECT * FROM patient AS p "
                               "INNER JOIN serial AS s "
                               "ON p.chartnum = s.chartnum "
                               "INNER JOIN video AS v "
                               "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                              " WHERE s.remark LIKE '%"+str+"%' LIMIT %1,20").arg((page-1)*20);
+                              " WHERE s.remark LIKE '%"+str+"%' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
         qmodel->setQuery(sql);
         }
     }
@@ -499,14 +507,14 @@ int DbPage::selectVideo(QString attend, QString assistant, QString type, int vid
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN video AS v "
                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                        " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' LIMIT 0,20");
+                        " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' ORDER BY v.starttime DESC LIMIT 0,20");
        if(page > 0){
        QString sql = QString("SELECT * FROM patient AS p "
                              "INNER JOIN serial AS s "
                              "ON p.chartnum = s.chartnum "
                              "INNER JOIN video AS v "
                              "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                             " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' LIMIT %1,20").arg((page-1)*20);
+                             " WHERE s.attend = '"+attend+"' AND s.assistant = '"+assistant+"' ORDER BY v.starttime DESC LIMIT %1,20").arg((page-1)*20);
        qmodel->setQuery(sql);
        }
     }
@@ -536,7 +544,7 @@ int DbPage::selectVideo(QString name, int minAge, int maxAge, QString type, int 
                     "ON p.chartnum = s.chartnum "
                     "INNER JOIN video AS v "
                     "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                    " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 LIMIT 0,20").arg(minAge).arg(maxAge);
+                    " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 ORDER BY v.starttime DESC LIMIT 0,20").arg(minAge).arg(maxAge);
        qmodel->setQuery(str);
        if(page > 0){
            str = QString("SELECT * FROM patient AS p "
@@ -544,7 +552,7 @@ int DbPage::selectVideo(QString name, int minAge, int maxAge, QString type, int 
                         "ON p.chartnum = s.chartnum "
                         "INNER JOIN video AS v "
                         "ON v.chartnum = s.chartnum AND v.serialnum = s.serialnum"
-                        " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 LIMIT %3,20").arg(minAge).arg(maxAge).arg((page-1)*20);
+                        " WHERE p.name = '"+name+"' AND p.age BETWEEN %1 AND %2 ORDER BY v.starttime DESC LIMIT %3,20").arg(minAge).arg(maxAge).arg((page-1)*20);
 
        qmodel->setQuery(str);
        }

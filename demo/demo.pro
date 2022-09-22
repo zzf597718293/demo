@@ -1,4 +1,4 @@
-QT       += core gui serialport sql multimedia multimediawidgets
+QT       += core gui serialport sql multimedia multimediawidgets winextras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

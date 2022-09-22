@@ -1,38 +1,50 @@
 QPalette{background:#EAF7FF;}*{outline:0px;color:#386487;}
 QLabel#labelTime{
-color:#00a6e4;
+color:#ffffff;
 
 }
+QWidget#stackedWidget{
+background:#FFFFFF;
+}
+QWidget#Widget{
+background:#57AAF7;
+}
+QWidget#widget{
+background:#f9f9f9;
+}
 QToolButton{
+color:#ffffff;
 border:0px solid #DCDCDC;
 border-radius:0px;
 margin:0px;
 padding:3px;
 background:none;}
 QToolButton:hover{
-    background:#C0DCF2;
+background:#4f9de5;
 }
-
+QToolButton:pressed{
+background:#4f9de5;
+}
 QPushButton:hover{
-background:#C0DCF2;
+background:#57AAF7;
 }
 
 QSlider::groove:horizontal{
 height:8px;
 border-radius:4px;
-background:#DEF0FE;
+background:#d0e8ff;
 }
 
 QSlider::add-page:horizontal{
 height:8px;
 border-radius:4px;
-background:#DEF0FE;
+background:#d0e8ff;
 }
 
 QSlider::sub-page:horizontal{
 height:8px;
 border-radius:4px;
-background:#4682B4;
+background:#57aaf7;
 }
 
 QSlider::handle:horizontal{
@@ -40,7 +52,7 @@ width:13px;
 margin-top:-3px;
 margin-bottom:-3px;
 border-radius:6px;
-background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #EAF7FF,stop:0.8 #00a6e4);
+background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #57aaf7,stop:0.8 #57aaf7);
 }
 
 QSlider::groove:vertical{
@@ -69,30 +81,143 @@ border-radius:6px;
 background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #EAF7FF,stop:0.8 #00a6e4);
 }
 .QPushButton{
-border-style:none;
-border:1px solid #4682B4;
-color:#386487;
+border:1px solid #333333;
+color:#000000;
 padding:5px;
-border-radius:5px;
+border-radius:12px;
+}
+.QPushButton:hover{
+background:#E8E8E8;
 }
 .QToolButton{
 border-style:none;
-border:1px solid #C0DCF2;
-color:#386487;
+border:1px solid #57AAF7;
+color:#ffffff;
 padding:5px;
 border-radius:5px;
 
 }
+
 QLabel{
-font-family:Microsoft Yahei;
-color:#00a6e4;
-font:13pt;
+font-family:SimSun;
+color:#000000;
+font:14px;
 }
 QLineEdit{
-border:1px solid #4682B4;
+border:1px solid #7A7A7A;
 border-radius:2px;
+color:#000000;
 }
 QComboBox{
-border:1px solid #4682B4;
+border:1px solid #7A7A7A;
 border-radius:2px;
+color:#000000;
+}
+QComboBox::down-arrow{
+image:url(:/comboxDown.png);
+width:10px;
+height:10px;
+right:2px;
+}
+QComboBox{
+border:1px solid #7A7A7A;
+padding:2px;
+background:none;
+selection-background-color:#386488;
+selection-color:#FFFFFF;
+}
+QComboBox:focus,QComboBox:hover{
+border:1px solid #000000;
+}
+QComboBox::drop-down{
+subcontrol-origin:padding;
+subcontrol-position:top right;
+width:15px;
+border-left-width:0px;
+border-left-style:solid;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-left-color:#000000;
+}
+QSpinBox::up-button{
+image:url(:/spinBoxUp.png);
+width:10px;
+height:10px;
+padding:2px 5px 0px 0px;
+}
+
+QSpinBox::down-button{
+image:url(:/spinBoxDown.png);
+width:10px;
+height:10px;
+padding:0px 5px 2px 0px;
+}
+
+QSpinBox::up-button:pressed{
+top:-2px;
+}
+
+QSpinBox::down-button:pressed,QSpinBox::down-button:pressed{
+bottom:-2px;
+}
+QSpinBox{
+border:1px solid #7A7A7A;
+padding:2px;
+background:none;
+selection-background-color:#000000;
+selection-color:#FFFFFF;
+}
+
+QSpinBox:focus,QSpinBox:hover{
+border:1px solid #000000;
+}
+QPushButton#btnSave{
+border-color:#57aaf7;
+color:#ffffff;
+background:#57aaf7;
+}
+QPushButton#btnSave:hover{
+background:#4f9de5;
+}
+QPushButton#btnSave:pressed{
+background:#498fcf;
+}
+QPushButton#btnClean{
+border-color:#57aaf7;
+background:#ffffff;
+color:#57aaf7;
+}
+QPushButton#btnClean:hover{
+background:#e8e8e8;
+color:#57aaf7;
+}
+QPushButton#btnClean:pressed{
+background:#57aaf7;
+color:#ffffff;
+}
+
+QPushButton#btnSystemSave{
+border-color:#57aaf7;
+color:#ffffff;
+background:#57aaf7;
+}
+QPushButton#btnSystemSave:hover{
+background:#4f9de5;
+}
+QPushButton#btnSystemSave:pressed{
+background:#498fcf;
+}
+QPushButton#btnAdd{
+background:#ffffff;
+border-color:#FEA94E;
+color:#FEA94E;
+}
+QLabel#labelSerial{
+color:#ffffff;
+}
+QPushButton#btnMenu_Min:hover,#btnMenu_Max:hover,#btnMenu_Close:hover{
+background:#4f9de5;
+}
+QPushButton#btnMenu_Min:pressed,#btnMenu_Max:pressed,#btnMenu_Close:pressed{
+background:#498fcf;
 }

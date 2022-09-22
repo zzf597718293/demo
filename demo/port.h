@@ -20,6 +20,7 @@ public:
 signals:
     void sendData(QString string_data);
 private:
+    QByteArray buffer;
     void receiveData();
 
 };

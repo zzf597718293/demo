@@ -1,6 +1,7 @@
 #ifndef VIDEOTHREAD_H
 #define VIDEOTHREAD_H
 #include"imageprocess.h"
+#include"dbpage.h"
 #include<QThread>
 #include<QTimer>
 #include<QPushButton>
@@ -18,6 +19,7 @@
 #include<opencv2/video/video.hpp>
 #include<opencv2/imgproc/types_c.h>
 #include<opencv2/video/tracking.hpp>
+#include<QtWinExtras/QtWinExtras>
 using namespace std;
 class VideoThread : public QObject
 {
@@ -39,6 +41,7 @@ private:
     cv::VideoWriter writer;
     cv::Mat frame;
     bool stopFlag=false;
+    DbPage dbpage;
 };
 
 #endif // VIDEOTHREAD_H
